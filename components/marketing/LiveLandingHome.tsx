@@ -177,6 +177,39 @@ export default function LiveLandingHome({ isPreview = false }: { isPreview?: boo
 
         <FoundingRateLockPricingGrid mode="live" />
 
+        <div className="mx-auto mt-7 flex max-w-[1160px] flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-400/30 bg-[#111318] p-5 text-left">
+          <div className="max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-wider">
+              <span className="rounded bg-amber-400/15 px-2 py-0.5 text-amber-300">
+                Live Video Studio · Single &amp; Team
+              </span>
+              <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-emerald-300">
+                Nights &amp; Weekends · Limited Seats
+              </span>
+            </div>
+            <h3 className="mt-2 font-serif text-lg font-bold text-white">
+              Live 1-on-1 Sessions ($180) &amp; Multi-Athlete Team Training ($3,500/mo)
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300">
+              Train live in our encrypted 60fps WebRTC studio with real-time telestration &amp; ERAP safety—single 1:1 sessions ($180), 4-pack ($660), 8-pack ($1,240), or corporate Team Live Studio cohorts.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              href="/packages#live-1-on-1"
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-400/45 bg-amber-500/15 px-4 py-2 text-xs font-bold text-amber-200 no-underline transition hover:bg-amber-500/25"
+            >
+              <span>Live 1:1 Pricing →</span>
+            </Link>
+            <Link
+              href="/corporate"
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/12 px-4 py-2 text-xs font-bold text-emerald-200 no-underline transition hover:bg-emerald-500/22"
+            >
+              <span>Team Live Training →</span>
+            </Link>
+          </div>
+        </div>
+
         <p className="forge-billing-note">
           Secure Stripe checkout. Includes 1 giftable 30-day Core Lab Partner Pass. Cancel recurring
           memberships anytime in 1 click ($0 cancellation fees).
@@ -194,6 +227,7 @@ export default function LiveLandingHome({ isPreview = false }: { isPreview?: boo
         <p>Built From The Ground Up. Precision Science For Real Lives.</p>
         <nav aria-label="Footer">
           <Link href="/packages">Pricing</Link>
+          <Link href="/corporate">Team Training</Link>
           <Link href="/audit">Movement Screen</Link>
           <Link href="/apply">Apply</Link>
           <Link href="/credentials">Credentials</Link>

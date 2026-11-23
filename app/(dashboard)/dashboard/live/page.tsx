@@ -6,6 +6,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import LiveVideoCameraHud from '@/components/coach/LiveVideoCameraHud'
 import LivePreSessionErapGate from '@/components/fitness/LivePreSessionErapGate'
 import MandatoryLegalClickwrapGate from '@/components/legal/MandatoryLegalClickwrapGate'
+import { getTeamById, type TeamMember } from '@/lib/teams'
 import { checkClientLegalConsentGate } from '@/lib/legal-compliance'
 import {
   checkClientMedicalClearanceGate,
@@ -24,11 +25,8 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  // Team Live Studio is permanently disabled; strip legacy ?teamId=... links to 1:1 Live Studio
   const resolvedParams = searchParams ? await searchParams : {}
-  if (resolvedParams.teamId) {
-    redirect('/dashboard/live')
-  }
+  const requestedTeamId = typeof resolvedParams.teamId === 'string' ? resolvedParams.teamId.trim() : ''
 
   const admin = supabaseAdmin()
 
@@ -78,7 +76,28 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
     }
   }
 
-  const sessionId = `live-${user.id}`
+  let isTeamSession = false
+  let activeTeamName: string | undefined
+  let activeTeamRoster: TeamMember[] = []
+  let sessionId = `live-${user.id}`
+
+  if (requestedTeamId) {
+    const team = await getTeamById(requestedTeamId, client?.designated_coach_id ?? undefined)
+    const isAuthorizedTeamMember =
+      Boolean(team) &&
+      (team!.members.some(m => m.clientId === user.id) ||
+        (Boolean(client?.designated_coach_id) && team!.coachId === client?.designated_coach_id))
+
+    if (team && isAuthorizedTeamMember) {
+      isTeamSession = true
+      activeTeamName = team.name
+      activeTeamRoster = team.members
+      sessionId = `team-${team.id}`
+    } else {
+      redirect('/dashboard/live')
+    }
+  }
+
   const athleteName = client?.full_name || user.email?.split('@')[0] || 'Athlete'
 
   const normalizedParq = normalizeParqAnswersFromIntake(intake?.parq_answers, intake)
@@ -94,7 +113,7 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
       }}
     >
       <SiteHeader
-        badgeText="1:1 Live Studio"
+        badgeText={isTeamSession && activeTeamName ? `Team Live Studio · ${activeTeamName}` : '1:1 Live Studio'}
         links={[
           { href: '/dashboard', label: 'Today' },
           { href: '/dashboard/fitness', label: 'Training & progress' },
@@ -135,7 +154,9 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  Forge Athletic · 1:1 Live Telehealth Studio
+                  {isTeamSession && activeTeamName
+                    ? `Forge Athletic · Team Live Studio (${activeTeamName})`
+                    : 'Forge Athletic · 1:1 Live Telehealth Studio'}
                 </span>
               </div>
               <h1
@@ -148,10 +169,12 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
                   lineHeight: 1.2,
                 }}
               >
-                1:1 LIVE COACHING &amp; MOVEMENT HUD
+                {isTeamSession ? 'TEAM LIVE COACHING & MOVEMENT HUD' : '1:1 LIVE COACHING & MOVEMENT HUD'}
               </h1>
               <p style={{ margin: '2px 0 0', color: 'var(--gray)', fontSize: 12, lineHeight: 1.35 }}>
-                Direct 1:1 interactive video feed with {coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.
+                {isTeamSession
+                  ? `Multi-athlete live coaching room with ${coachName} and ${activeTeamName}. Complete your ERAP check-in to join live team pacing and form cues.`
+                  : `Direct 1:1 interactive video feed with ${coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.`}
               </p>
             </div>
           </div>
@@ -214,7 +237,9 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
                 sessionId={sessionId}
                 currentUserId={user.id}
                 isCoach={false}
-                isTeamSession={false}
+                isTeamSession={isTeamSession}
+                teamName={activeTeamName}
+                teamRoster={activeTeamRoster}
               />
             </LivePreSessionErapGate>
           )}

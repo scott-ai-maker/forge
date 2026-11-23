@@ -83,13 +83,15 @@ describe('CoachLiveSessionLauncher Logic & Architecture (1:1 ERAP Verified Only)
     expect(getLaunchButtonText(undefined, false)).toBe('Select Athlete to Begin')
   })
 
-  it('permanently disables Team Live Studio channels and team session endpoints in launcher source', () => {
+  it('enables both 1:1 and multi-peer Team Live Studio channels with private Realtime rooms', () => {
     const launcherSource = readFileSync(
       resolve(process.cwd(), 'components/coach/CoachLiveSessionLauncher.tsx'),
       'utf8'
     )
-    expect(launcherSource).not.toContain('webrtc:team-')
-    expect(launcherSource).not.toContain('/api/coach/teams/')
-    expect(launcherSource).not.toContain('launch-team-studio-btn')
+    expect(launcherSource).toContain('webrtc:live-')
+    expect(launcherSource).toContain('webrtc:team-')
+    expect(launcherSource).toContain('/api/coach/teams/')
+    expect(launcherSource).toContain('launch-team-studio-btn')
+    expect(launcherSource).toContain('private: true')
   })
 })

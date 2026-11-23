@@ -74,7 +74,7 @@ describe('HolidayUnmaskingSplash & Streamlined Jan 4 Founding Cohort Landing', (
     expect(sneakPeekSource).not.toContain('FORGE LAB //')
   })
 
-  it('verifies streamlined 4-link navigation anchors and zero benched Live Studio / $180 strings remain', () => {
+  it('verifies streamlined 4-link navigation anchors, active Live 1-on-1 & Team Studio ad-copy/pricing, and zero legacy clutter', () => {
     for (const anchor of ['#how-it-works', '#movement-lab', '#pricing', '#faq']) {
       expect(componentSource).toContain(anchor)
       expect(liveHomeSource).toContain(anchor)
@@ -89,8 +89,9 @@ describe('HolidayUnmaskingSplash & Streamlined Jan 4 Founding Cohort Landing', (
       socialProofSource,
     ].join('\n')
 
-    expect(combinedPublicMarketing).not.toMatch(/live studio/i)
-    expect(combinedPublicMarketing).not.toContain('$180')
+    expect(combinedPublicMarketing).toMatch(/live.*video studio/i)
+    expect(combinedPublicMarketing).toContain('$180')
+    expect(combinedPublicMarketing).toContain('/corporate')
     expect(combinedPublicMarketing).not.toMatch(/chrono-dosing/i)
     expect(combinedPublicMarketing).not.toMatch(/tanaka/i)
   })

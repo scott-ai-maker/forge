@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -82,7 +81,6 @@ const CHALLENGES = [
 ]
 
 export default function CorporateRetainersPage() {
-  if (Boolean(true)) redirect('/packages')
   return (
     <main id="main-content" style={{ minHeight: '100dvh', background: 'var(--navy)', position: 'relative' }}>
       <script

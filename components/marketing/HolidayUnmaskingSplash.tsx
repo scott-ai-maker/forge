@@ -339,7 +339,7 @@ export default function HolidayUnmaskingSplash({
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 text-emerald-400">✓</span>
-                <span>Async Form Lab reviews, Priority Email (Plus) &amp; Direct SMS (Coach Support)</span>
+                <span>Live 1-on-1 &amp; Team Video Studio (nights &amp; weekends · limited seats) + Async Form Lab</span>
               </li>
             </ul>
 
@@ -686,6 +686,40 @@ export default function HolidayUnmaskingSplash({
             onPrelaunchClaimClick={scrollToReservationForm}
           />
 
+          {/* Live 1-on-1 & Team Video Studio Callout */}
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-400/30 bg-[#111318] p-5 text-left">
+            <div className="max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-wider">
+                <span className="rounded bg-amber-400/15 px-2 py-0.5 text-amber-300">
+                  Live Video Studio · Single &amp; Team
+                </span>
+                <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-emerald-300">
+                  Nights &amp; Weekends · Limited Seats
+                </span>
+              </div>
+              <h3 className="mt-2 font-serif text-lg font-bold text-white">
+                Live 1-on-1 Sessions ($180) &amp; Multi-Athlete Team Training ($3,500/mo)
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-300">
+                Add real-time 60fps encrypted WebRTC coaching with Coach Gordon—1-on-1 private sessions ($180 single, $660 4-pack, $1,240 8-pack) or executive Team Live Studio cohorts for up to 10 leaders.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2.5">
+              <Link
+                href="/packages#live-1-on-1"
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-400/45 bg-amber-500/15 px-4 py-2 text-xs font-bold text-amber-200 no-underline transition hover:bg-amber-500/25"
+              >
+                <span>Live 1:1 Pricing →</span>
+              </Link>
+              <Link
+                href="/corporate"
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/12 px-4 py-2 text-xs font-bold text-emerald-200 no-underline transition hover:bg-emerald-500/22"
+              >
+                <span>Team Live Training →</span>
+              </Link>
+            </div>
+          </div>
+
           <div className="mt-7 text-center">
             <Link
               href="/packages"
@@ -716,6 +750,9 @@ export default function HolidayUnmaskingSplash({
           >
             <Link href="/packages" className="inline-flex min-h-[44px] items-center text-inherit no-underline hover:text-amber-300">
               Pricing
+            </Link>
+            <Link href="/corporate" className="inline-flex min-h-[44px] items-center text-inherit no-underline hover:text-amber-300">
+              Team Training
             </Link>
             <Link href="/audit" className="inline-flex min-h-[44px] items-center text-inherit no-underline hover:text-amber-300">
               Movement Screen

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
@@ -26,7 +25,6 @@ interface CorporateProposalPageProps {
 }
 
 export default async function CorporateProposalPage({ searchParams }: CorporateProposalPageProps) {
-  if (Boolean(true)) redirect('/packages')
   const params = await searchParams
 
   const companyParam = typeof params.company === 'string' ? params.company : 'Your organization'

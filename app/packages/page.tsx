@@ -35,8 +35,8 @@ const packagesStructuredData = {
     '@type': 'AggregateOffer',
     priceCurrency: 'USD',
     lowPrice: '49.00',
-    highPrice: '299.00',
-    offerCount: '3',
+    highPrice: '3500.00',
+    offerCount: '5',
     offers: [
       {
         '@type': 'Offer',
@@ -64,6 +64,24 @@ const packagesStructuredData = {
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
         description: '1-on-1 Certified Personal Coaching & Direct Text Line: Direct SMS Text Line & Priority In-App Chat with Coach Gordon (24h SLA), 8 Form Lab reviews/month, bespoke OPT™ overrides, and quarterly mesh review.',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Live 1-on-1 Studio Coaching Sessions',
+        price: '180.00',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/LimitedAvailability',
+        url: 'https://forge-athletic.app/packages#add-ons',
+        description: 'Real-time 1-on-1 live video coaching with Coach Gordon in the high-definition Live Video Studio ($180 single, $660 4-pack, $1,240 8-pack). Strictly limited seat roster; availability dedicated exclusively to nights and weekends.',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Team & Corporate Live Studio Retainer',
+        price: '3500.00',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/LimitedAvailability',
+        url: 'https://forge-athletic.app/corporate',
+        description: 'Multi-athlete Team Live Video Studio coaching and personalized NASM OPT™ access for up to 10 team members ($3,500/mo or $35,000/yr).',
       },
     ],
   },
@@ -146,6 +164,13 @@ const COMPARISON_ROWS = [
     plus: 'Algorithmic OPT™ + Monthly Async Review',
     support: 'Bespoke Coach Gordon Overrides & Sign-Off',
     note: 'Core and Plus use algorithmic NASM OPT™ guardrails with 1-tap joint regressions; Coach Support adds bespoke plan certification by Coach Gordon.',
+  },
+  {
+    feature: 'Live 1-on-1 & Team Video Studio Sessions',
+    core: 'Add-on ($180/ea · Packs Available)',
+    plus: 'Add-on ($180/ea · Packs Available)',
+    support: 'Quarterly + Add-on · Team Plans ($3,500/mo)',
+    note: 'Real-time 60fps encrypted WebRTC coaching for 1:1 athletes and multi-athlete teams with live telestration & ERAP safety. Strictly limited seats; nights & weekends.',
   },
   {
     feature: 'Founding Cohort & Roster Limits',
@@ -319,7 +344,125 @@ export default function PackagesPage() {
           </table>
         </section>
 
-        {/* Optional Add-ons */}
+        {/* Live 1-on-1 & Team Video Studio Coaching Banner */}
+        <section
+          id="live-1-on-1"
+          aria-labelledby="live-studio-banner-heading"
+          style={{
+            margin: '3rem auto 1.5rem',
+            padding: '1.5rem 1.75rem',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.14) 0%, rgba(15, 23, 42, 0.96) 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.38)',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1.25rem',
+          }}
+        >
+          <div style={{ maxWidth: '820px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#D4AF37',
+                  background: 'rgba(212, 175, 55, 0.18)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                }}
+              >
+                STRICTLY LIMITED SEATS
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#34D399',
+                  background: 'rgba(52, 211, 153, 0.15)',
+                  border: '1px solid rgba(52, 211, 153, 0.35)',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                }}
+              >
+                NIGHTS &amp; WEEKENDS ONLY
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#7DD3FC',
+                  background: 'rgba(56, 189, 248, 0.14)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                }}
+              >
+                1:1 &amp; MULTI-ATHLETE TEAM STUDIO
+              </span>
+            </div>
+            <h2 id="live-studio-banner-heading" style={{ margin: 0, color: '#FFF', fontSize: '1.3rem', fontFamily: 'var(--font-heading)', letterSpacing: '0.02em' }}>
+              Live 1-on-1 &amp; Team Video Studio Coaching
+            </h2>
+            <p style={{ margin: '6px 0 0', color: '#CBD5E1', fontSize: '0.92rem', lineHeight: 1.55 }}>
+              Train live with Coach Gordon in the encrypted 60fps Forge Live Video Studio featuring real-time telestrator form markups, slow-motion replay analysis, ERAP safety verification, and instant NASM OPT™ updates. Book single 1:1 sessions ($180), discounted 4-pack ($660) or 8-pack ($1,240) blocks on nights &amp; weekends, or enroll up to 10 leaders in our multi-athlete Team Live Studio program ($3,500/mo · $35,000/yr).
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <a
+              href="#add-ons"
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                background: 'var(--gold)',
+                color: '#080E14',
+                fontFamily: 'var(--font-heading)',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 14px rgba(212, 160, 23, 0.25)',
+              }}
+            >
+              View 1:1 Studio Packs ↓
+            </a>
+            <Link
+              href="/corporate"
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                background: 'rgba(52, 211, 153, 0.14)',
+                border: '1px solid rgba(52, 211, 153, 0.45)',
+                color: '#6EE7B7',
+                fontFamily: 'var(--font-heading)',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Team Live Training →
+            </Link>
+          </div>
+        </section>
+
+        {/* Optional Add-ons & Live Studio Sessions */}
         <ForgeAddons />
 
         {/* Value Proposition & Massachusetts Coaching Philosophy */}

@@ -165,6 +165,11 @@ export const ECOSYSTEM_PILLARS: ReadonlyArray<EcosystemPillar> = [
     title: 'Real Human Coaching, Travel & Companion Tools',
     items: [
       {
+        title: 'Live 1-on-1 & Team Video Studio (Nights & Weekends)',
+        description:
+          'Train live in our encrypted 60fps WebRTC studio with Coach Gordon—real-time telestration, slow-motion replay, and ERAP safety verification for 1:1 athletes ($180 single · $660 4-pack · $1,240 8-pack) and multi-athlete corporate teams ($3,500/mo · $35,000/yr).',
+      },
+      {
         title: 'Async Form Lab Video Reviews',
         description:
           'Built-in 45° camera guide that auto-trims dead setup time so Coach Gordon can return frame-by-frame slow-motion video telestration and voice coaching notes.',
@@ -316,9 +321,9 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
 export const LANDING_FAQ_ITEMS: ReadonlyArray<LandingFaqItem> = [
   {
     id: 'trainer-without-zoom',
-    question: 'How does Forge Athletic feel like having a real personal trainer without live Zoom scheduling?',
+    question: 'Do I get both flexible daily coaching AND Live 1-on-1 or Team Video Studio sessions?',
     answer:
-      'Instead of rearranging your calendar around rigid video appointments, Forge Athletic surrounds every session with four layers of coaching: 33-point phone camera posture and readiness checks before Set 1, Coach Gordon’s real recorded voice guiding your warm-ups, tempos, and rest intervals, asynchronous Form Lab video reviews where Coach Gordon returns slow-motion telestration and voice notes on your actual lifts, and direct Email or SMS access whenever you want human eyes on your training.',
+      'Yes. Every membership surrounds your daily workouts with 33-point browser posture checks, Coach Gordon’s real recorded voice guidance, and Form Lab video reviews so you never have to wait on a calendar to train. Whenever you want real-time coaching, you can also book Live 1-on-1 Studio Sessions ($180 single, $660 4-pack, $1,240 8-pack — strictly limited seats on nights & weekends) or enroll your organization in multi-athlete Team Live Studio training ($3,500/mo or $35,000/yr).',
   },
   {
     id: 'joint-discomfort-safety',
