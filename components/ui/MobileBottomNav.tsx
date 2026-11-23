@@ -14,6 +14,15 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
   const pathname = usePathname() || ''
   const searchParams = useSearchParams()
 
+  // Hide global bottom navigation during active Live Studio video sessions so iPhone/mobile
+  // call controls (Mic, Cam, Flip, End) own the full bottom safe area without overlap.
+  const isLiveStudioRoom =
+    pathname === '/dashboard/live' ||
+    /^\/coach\/(clients|teams)\/[^/]+\/live/.test(pathname)
+  if (isLiveStudioRoom) {
+    return null
+  }
+
   if (role === 'coach') {
     const coachTab = searchParams.get('tab')
     const coachTabs: Array<{ href: string; label: string; icon: GaaIconName; isActive: boolean }> = [

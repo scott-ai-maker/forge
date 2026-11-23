@@ -28,7 +28,31 @@
 
 @media (max-width: 640px) {
   .teams-studio-shell {
-    border-radius: 14px;
+    border-radius: 12px;
+    border-inline: none;
+  }
+  .teams-video-grid,
+  .teams-video-grid.is-athlete-standalone {
+    min-block-size: clamp(380px, 64dvh, 720px);
+    padding: 4px;
+    gap: 6px;
+  }
+  .teams-pip-tile {
+    inline-size: clamp(96px, 27cqi, 132px) !important;
+    aspect-ratio: 3 / 4;
+    inset-block-end: 10px;
+  }
+  .teams-pip-tile.pip-start {
+    inset-inline-start: 10px;
+  }
+  .teams-pip-tile.pip-end {
+    inset-inline-end: 10px;
+  }
+  .teams-command-bar {
+    padding-block-start: 8px;
+    padding-block-end: max(12px, env(safe-area-inset-bottom, 12px));
+    padding-inline: 8px;
+    gap: 6px;
   }
 }
 

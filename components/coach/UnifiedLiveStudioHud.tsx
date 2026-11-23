@@ -317,9 +317,10 @@ export default function UnifiedLiveStudioHud({
   const [_isRingingTeamMembers, _setIsRingingTeamMembers] = useState(false)
 
   // Responsive Form-Factor & Microsoft Teams Collapsible Workout Side-Pane State
-  // ('both' = video on top + logger below, 'video' = full-screen video, 'workout' = full logger on <768px phones)
+  // ('video' = FaceTime-first full video on phones, 'workout' = full logger, 'both' = stacked)
   const [isMobile, setIsMobile] = useState<boolean>(false)
-  const [mobileViewMode, setMobileViewMode] = useState<'both' | 'video' | 'workout'>('both')
+  const [mobileViewMode, setMobileViewMode] = useState<'both' | 'video' | 'workout'>('video')
+  const [showMobileTools, setShowMobileTools] = useState<boolean>(false)
   const [isSidePaneOpen, setIsSidePaneOpen] = useState<boolean>(true)
   const initializedPaneRef = useRef<boolean>(false)
 
@@ -1907,39 +1908,27 @@ export default function UnifiedLiveStudioHud({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => setShowConsultationPlaybook(true)}
-                style={{
-                  padding: '5px 8px',
-                  background: 'rgba(212,160,23,0.18)',
-                  border: '1px solid var(--gold)',
-                  color: 'var(--gold-lt)',
-                  borderRadius: 4,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <GaaIcon name="clipboard" size={11} tone="gold" />
-                <span>Playbook</span>
-              </button>
+              <LiveBandwidthSelectorPill
+                bandwidthMode={bandwidthMode}
+                effectiveTier={effectiveTier}
+                networkQuality={networkQuality}
+                onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
+                compact
+              />
 
               <button
                 type="button"
                 onClick={() => setShowWrapUpModal(true)}
                 className="tactile-btn"
                 style={{
-                  padding: '5px 9px',
+                  minHeight: 36,
+                  padding: '5px 10px',
                   background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: 4,
+                  borderRadius: 6,
                   fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -1957,11 +1946,12 @@ export default function UnifiedLiveStudioHud({
                 data-testid="exit-cockpit-btn"
                 title="Exit Live Command Cockpit"
                 style={{
-                  padding: '5px 8px',
+                  minHeight: 36,
+                  padding: '5px 9px',
                   background: 'rgba(239,68,68,0.2)',
                   border: '1px solid #EF4444',
                   color: '#FFFFFF',
-                  borderRadius: 4,
+                  borderRadius: 6,
                   fontSize: 11,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -1976,7 +1966,8 @@ export default function UnifiedLiveStudioHud({
             </div>
           </div>
 
-          {/* Row 2: Heart Rate + Cal + Day Tabs + Eco */}
+          {/* Row 2: Heart Rate + Cal + Day Tabs + Eco (shown in Workout/Split modes to keep Video mode FaceTime-clean) */}
+          {mobileViewMode !== 'video' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, overflowX: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div
@@ -2075,6 +2066,7 @@ export default function UnifiedLiveStudioHud({
               </button>
             </div>
           </div>
+          )}
         </div>
       ) : (
         <div className="teams-top-bar">
@@ -2520,7 +2512,8 @@ export default function UnifiedLiveStudioHud({
         </div>
       )}
 
-      {/* ── Studio Lobby Presence & Diagnostic Telemetry Bar ── */}
+      {/* ── Studio Lobby Presence & Diagnostic Telemetry Bar (hidden on phone once video is live!) ── */}
+      {(!isMobile || !activeRemoteStream || peerConnectionState !== 'connected') && (
       <div
         data-testid="live-studio-lobby-banner"
         className="teams-lobby-bar"
@@ -2603,6 +2596,30 @@ export default function UnifiedLiveStudioHud({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {athleteInLobby && !activeRemoteStream && (
+            <button
+              type="button"
+              onClick={handleReconnectStream}
+              className="tactile-btn"
+              style={{
+                minHeight: 36,
+                padding: '6px 12px',
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                color: '#04070E',
+                border: 'none',
+                borderRadius: 999,
+                fontSize: 11.5,
+                fontWeight: 900,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <GaaIcon name="rotate-ccw" size={12} tone="dark" />
+              <span>Connect Video</span>
+            </button>
+          )}
           {!athleteInLobby && (
             <button
               type="button"
@@ -2635,6 +2652,7 @@ export default function UnifiedLiveStudioHud({
           )}
         </div>
       </div>
+      )}
 
       {/* ── 2. Main Broadcast Stage (Microsoft Teams Adaptive Stage + Collapsible Side Pane) ── */}
       <div
@@ -4447,20 +4465,21 @@ export default function UnifiedLiveStudioHud({
             </div>
           )}
 
-          {/* Left Stage Bottom Control Bar (Microsoft Teams Unified Meeting Command Bar) */}
+          {/* Left Stage Bottom Control Bar (Phone-First FaceTime Dock on <768px, Full Studio Command Bar on Desktop) */}
           <div className="teams-command-bar">
             {/* Cluster 1: Media Hardware & Leave */}
-            <div className="teams-dock-cluster">
+            <div className="teams-dock-cluster" style={isMobile ? { width: '100%', justifyContent: 'space-around' } : undefined}>
               <button
                 type="button"
                 onClick={toggleMic}
                 style={{
-                  padding: '5px 10px',
-                  background: isMicMuted ? '#EF4444' : 'rgba(255,255,255,0.08)',
+                  minHeight: isMobile ? 46 : undefined,
+                  padding: isMobile ? '10px 13px' : '5px 10px',
+                  background: isMicMuted ? '#EF4444' : 'rgba(255,255,255,0.1)',
                   color: '#FFF',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 5,
-                  fontSize: 11,
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  borderRadius: isMobile ? 999 : 5,
+                  fontSize: isMobile ? 12 : 11,
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -4468,7 +4487,7 @@ export default function UnifiedLiveStudioHud({
                   gap: 4,
                 }}
               >
-                <GaaIcon name={isMicMuted ? 'mic-off' : 'mic'} size={12} tone="inherit" />
+                <GaaIcon name={isMicMuted ? 'mic-off' : 'mic'} size={isMobile ? 15 : 12} tone="inherit" />
                 <span>{isMicMuted ? 'Unmute' : 'Mic'}</span>
               </button>
 
@@ -4476,12 +4495,13 @@ export default function UnifiedLiveStudioHud({
                 type="button"
                 onClick={toggleCamera}
                 style={{
-                  padding: '5px 10px',
-                  background: isCameraActive ? 'rgba(255,255,255,0.08)' : '#EF4444',
+                  minHeight: isMobile ? 46 : undefined,
+                  padding: isMobile ? '10px 13px' : '5px 10px',
+                  background: isCameraActive ? 'rgba(255,255,255,0.1)' : '#EF4444',
                   color: '#FFF',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 5,
-                  fontSize: 11,
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  borderRadius: isMobile ? 999 : 5,
+                  fontSize: isMobile ? 12 : 11,
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -4489,7 +4509,7 @@ export default function UnifiedLiveStudioHud({
                   gap: 4,
                 }}
               >
-                <GaaIcon name={isCameraActive ? 'video-studio' : 'stop'} size={12} tone="inherit" />
+                <GaaIcon name={isCameraActive ? 'video-studio' : 'stop'} size={isMobile ? 15 : 12} tone="inherit" />
                 <span>{isCameraActive ? 'Cam' : 'Cam Off'}</span>
               </button>
 
@@ -4497,21 +4517,62 @@ export default function UnifiedLiveStudioHud({
                 type="button"
                 onClick={() => studioPipeline.flipCamera()}
                 style={{
-                  padding: '5px 8px',
-                  background: 'rgba(255,255,255,0.08)',
+                  minHeight: isMobile ? 46 : undefined,
+                  padding: isMobile ? '10px 12px' : '5px 8px',
+                  background: 'rgba(255,255,255,0.1)',
                   color: '#FFF',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 5,
-                  fontSize: 11,
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  borderRadius: isMobile ? 999 : 5,
+                  fontSize: isMobile ? 12 : 11,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 3,
                 }}
               >
-                <GaaIcon name="rotate-ccw" size={11} tone="inherit" />
+                <GaaIcon name="rotate-ccw" size={isMobile ? 15 : 11} tone="inherit" />
                 <span>Flip</span>
               </button>
+
+              {isMobile && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsStageSwapped(prev => !prev)}
+                    style={{
+                      minHeight: 46,
+                      padding: '10px 12px',
+                      background: isStageSwapped ? 'rgba(59,130,246,0.28)' : 'rgba(255,255,255,0.1)',
+                      color: isStageSwapped ? '#93C5FD' : '#FFF',
+                      border: '1px solid rgba(255,255,255,0.16)',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⇄
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileTools(prev => !prev)}
+                    style={{
+                      minHeight: 46,
+                      padding: '10px 13px',
+                      background: showMobileTools ? 'rgba(212,175,55,0.24)' : 'rgba(255,255,255,0.1)',
+                      color: showMobileTools ? 'var(--gold-lt)' : '#FFF',
+                      border: showMobileTools ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.16)',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Tools
+                  </button>
+                </>
+              )}
 
               {/* Bottom Dock Exit Cockpit Button */}
               <button
@@ -4520,12 +4581,13 @@ export default function UnifiedLiveStudioHud({
                 data-testid="dock-exit-cockpit-btn"
                 title="Exit Live Command Cockpit (Esc)"
                 style={{
-                  padding: '5px 10px',
-                  background: 'rgba(239, 68, 68, 0.18)',
-                  border: '1px solid rgba(239, 68, 68, 0.45)',
-                  color: '#FCA5A5',
-                  borderRadius: 5,
-                  fontSize: 11,
+                  minHeight: isMobile ? 46 : undefined,
+                  padding: isMobile ? '10px 13px' : '5px 10px',
+                  background: isMobile ? '#DC2626' : 'rgba(239, 68, 68, 0.18)',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  color: isMobile ? '#FFFFFF' : '#FCA5A5',
+                  borderRadius: isMobile ? 999 : 5,
+                  fontSize: isMobile ? 12 : 11,
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -4534,12 +4596,14 @@ export default function UnifiedLiveStudioHud({
                   transition: 'all 0.15s ease',
                 }}
               >
-                <GaaIcon name="close" size={11} tone="ruby" />
-                <span>Exit Cockpit</span>
+                <GaaIcon name="close" size={12} tone={isMobile ? 'white' : 'ruby'} />
+                <span>{isMobile ? 'End' : 'Exit Cockpit'}</span>
               </button>
             </div>
 
-            {/* Cluster 2: Stage Gallery & Layout Controls */}
+            {/* Cluster 2: Stage Gallery & Layout Controls (collapsed behind Tools on phones) */}
+            {(!isMobile || showMobileTools) && (
+            <>
             <div className="teams-dock-cluster">
               {isTeamSession && (
                 <>
@@ -5060,6 +5124,8 @@ export default function UnifiedLiveStudioHud({
                 <span>ERAP Safety</span>
               </button>
             </div>
+            </>
+            )}
           </div>
         </div>
 

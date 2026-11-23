@@ -124,11 +124,11 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
         actions={<LogoutButton />}
       />
 
-      <div style={{ maxWidth: 1720, margin: '0 auto', padding: 'clamp(8px, 1.5vw, 16px) clamp(10px, 1.8vw, 20px)' }}>
+      <div style={{ maxWidth: 1720, margin: '0 auto', padding: 'clamp(4px, 1vw, 14px) clamp(4px, 1.5vw, 18px)' }}>
         <div
+          className="hidden sm:flex"
           style={{
             marginBottom: 12,
-            display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',

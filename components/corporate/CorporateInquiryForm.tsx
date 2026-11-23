@@ -6,7 +6,7 @@ export default function CorporateInquiryForm() {
   const [companyName, setCompanyName] = useState('')
   const [contactName, setContactName] = useState('')
   const [contactEmail, setContactEmail] = useState('')
-  const [teamSize, setTeamSize] = useState('5-10 executives')
+  const [teamSize, setTeamSize] = useState('5-6 executives (Executive Small Group)')
   const [customGoals, setCustomGoals] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -166,9 +166,9 @@ export default function CorporateInquiryForm() {
               outline: 'none',
             }}
           >
-            <option value="5-10 executives">5–10 people</option>
-            <option value="11-20 executives">11–20 people</option>
-            <option value="20+ enterprise">More than 20 people</option>
+            <option value="2-4 executives (Small Team Pod)">2–4 people (Small Team Pod · 1 live room)</option>
+            <option value="5-6 executives (Executive Small Group)">5–6 people (Executive Small Group · 1 live room)</option>
+            <option value="7-10 executives (Dual-Pod Team)">7–10 people (Dual-Pod Team · 2 live pods of 5)</option>
           </select>
         </div>
       </div>

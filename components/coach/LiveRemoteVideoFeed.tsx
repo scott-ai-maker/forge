@@ -142,8 +142,9 @@ export default function LiveRemoteVideoFeed({
     const checkTracks = () => {
       const tracks = stream.getTracks()
       const anyLive = tracks.some(t => t.readyState === 'live')
+      const hasVideoDims = video.videoWidth > 0 && video.videoHeight > 0
       const liveVideo = tracks.some(
-        t => t.kind === 'video' && t.readyState === 'live' && t.enabled !== false && !t.muted
+        t => t.kind === 'video' && t.readyState === 'live' && t.enabled !== false && (!t.muted || hasVideoDims)
       )
       const liveAudio = tracks.some(
         t => t.kind === 'audio' && t.readyState === 'live' && t.enabled !== false
@@ -155,7 +156,7 @@ export default function LiveRemoteVideoFeed({
 
       if (!liveVideo) {
         setHasDecodedFrame(false)
-      } else if (video.videoWidth > 0 && video.videoHeight > 0) {
+      } else if (hasVideoDims) {
         setHasDecodedFrame(true)
       }
 
@@ -286,16 +287,34 @@ export default function LiveRemoteVideoFeed({
           data-testid="remote-video-element"
           autoPlay
           playsInline
+          onLoadedMetadata={e => {
+            const v = e.currentTarget
+            if (v.videoWidth > 0 && v.videoHeight > 0) {
+              setHasDecodedFrame(true)
+              setHasLiveVideoTrack(true)
+            }
+            if (v.paused) void attemptPlay()
+          }}
+          onCanPlay={e => {
+            const v = e.currentTarget
+            if (v.videoWidth > 0 && v.videoHeight > 0) {
+              setHasDecodedFrame(true)
+              setHasLiveVideoTrack(true)
+            }
+            if (v.paused) void attemptPlay()
+          }}
           onLoadedData={e => {
             const v = e.currentTarget
             if (v.videoWidth > 0 && v.videoHeight > 0) {
               setHasDecodedFrame(true)
+              setHasLiveVideoTrack(true)
             }
           }}
           onResize={e => {
             const v = e.currentTarget
             if (v.videoWidth > 0 && v.videoHeight > 0) {
               setHasDecodedFrame(true)
+              setHasLiveVideoTrack(true)
             }
           }}
           onPlaying={e => {
@@ -303,6 +322,7 @@ export default function LiveRemoteVideoFeed({
             const v = e.currentTarget
             if (v.videoWidth > 0 && v.videoHeight > 0) {
               setHasDecodedFrame(true)
+              setHasLiveVideoTrack(true)
             }
           }}
           onPause={() => setIsPlaying(false)}
@@ -690,6 +710,35 @@ export default function LiveRemoteVideoFeed({
                 : 'Standby · Awaiting Remote Stream'}
             </span>
           </div>
+
+          {stream && hasActiveTracks && !isPlaying && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation()
+                void handleUserUnmute()
+              }}
+              style={{
+                marginTop: 12,
+                minHeight: 44,
+                padding: '9px 18px',
+                borderRadius: 999,
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                border: '1px solid #34D399',
+                color: '#04070E',
+                fontSize: 12,
+                fontWeight: 900,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 6px 20px rgba(16, 185, 129, 0.45)',
+              }}
+            >
+              <ForgeIcon name="volume" size={14} tone="dark" />
+              <span>Tap to Play Video &amp; Audio</span>
+            </button>
+          )}
         </div>
       )}
 

@@ -103,6 +103,7 @@ export interface WebRtcSignalPayload {
     | 'bandwidth-mode'
     | 'bandwidth-ceiling'
     | 'ice-restart-request'
+    | 'media-ready'
     | 'form-snapshot'
     | 'request-snapshot'
     | 'coaching-sync'
@@ -495,9 +496,24 @@ export class WebRtcPeerBridge {
     if (this.pc.signalingState === 'stable') {
       if (!this.isPolite) {
         void this.createOffer()
+      } else {
+        // Notify impolite Coach that Athlete's camera/mic tracks are now attached so Coach
+        // renegotiates `sendrecv` if initial offer/answer completed before iOS camera permission.
+        this.sendSignal({
+          type: 'media-ready',
+          senderId: this.options.currentUserId,
+          timestamp: Date.now(),
+        })
       }
     } else {
       this.negotiationPending = true
+      if (this.isPolite) {
+        this.sendSignal({
+          type: 'media-ready',
+          senderId: this.options.currentUserId,
+          timestamp: Date.now(),
+        })
+      }
     }
   }
 
@@ -1098,6 +1114,18 @@ export class WebRtcPeerBridge {
         return
       }
 
+      // Remote polite peer attached local camera/mic tracks after initial handshake -> renegotiate sendrecv
+      if (payload.type === 'media-ready') {
+        if (!this.isPolite) {
+          if (this.pc.signalingState === 'stable') {
+            void this.createOffer()
+          } else {
+            this.negotiationPending = true
+          }
+        }
+        return
+      }
+
       // Low-Bandwidth Periodic Form Snapshot Delivery
       if (payload.type === 'form-snapshot' && payload.data) {
         const snap = payload.data as { dataUrl?: string }
@@ -1188,6 +1216,30 @@ export class WebRtcPeerBridge {
         this.isSettingRemoteAnswerPending = false
 
         await this.drainPendingCandidates()
+
+        // Ensure local camera/mic tracks are bound to sendrecv transceivers BEFORE creating the answer
+        // so iOS/WebKit never answers with `recvonly` when local media is already live.
+        if (this.options.localStream && typeof this.pc.getTransceivers === 'function') {
+          const currentTransceivers = this.pc.getTransceivers()
+          for (const track of this.options.localStream.getTracks()) {
+            const match = currentTransceivers.find(
+              t =>
+                t.sender?.track?.id === track.id ||
+                t.sender?.track?.kind === track.kind ||
+                t.receiver?.track?.kind === track.kind
+            )
+            if (match) {
+              if (match.direction !== 'sendrecv') {
+                match.direction = 'sendrecv'
+              }
+              if (match.sender?.track?.id !== track.id) {
+                try {
+                  await match.sender.replaceTrack(track)
+                } catch {}
+              }
+            }
+          }
+        }
 
         const rawAnswer = await this.pc.createAnswer()
         const answer: RTCSessionDescriptionInit = {

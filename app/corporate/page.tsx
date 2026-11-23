@@ -45,18 +45,18 @@ const corporateStructuredData = {
 const CORPORATE_PILLARS = [
   {
     num: '01',
-    title: 'App access for up to 10 team members',
-    desc: 'Each person gets a personalized five-phase NASM OPT™ training plan, audio pacing tools, heart-rate-guided cardio, and monthly movement scans.',
+    title: 'Small-group coaching pods (4–10 seats)',
+    desc: 'Each person gets a personalized five-phase NASM OPT™ training plan, audio pacing tools, heart-rate-guided cardio, and local 33-point movement scans. Live sessions stay capped at 6 athletes per room (10-seat teams train in two dedicated 5-person pods).',
   },
   {
     num: '02',
-    title: 'Monthly live coaching session',
-    desc: 'Coach Gordon leads a 60-minute online or on-site session about movement, strength, mobility, and managing everyday stress.',
+    title: 'Monthly live small-group coaching session',
+    desc: 'Coach Gordon (NASM-CPT) leads a 60-minute encrypted Live Studio small-group session (nights & weekends) focused on movement quality, strength, mobility, and recovery.',
   },
   {
     num: '03',
     title: 'Quarterly team progress review',
-    desc: 'Review team participation, training progress, movement, and recovery.',
+    desc: 'Review combined team participation, training consistency, movement trends, and recovery.',
   },
   {
     num: '04',
@@ -152,7 +152,7 @@ export default function CorporateRetainersPage() {
               maxWidth: 820,
             }}
           >
-            Help your team build healthy movement and exercise habits with personalized training plans, coaching, and progress reviews for up to 10 people.
+            Help your leadership team build healthy movement and strength habits with personalized NASM OPT™ plans and live small-group video coaching (capped at 6 athletes per live session; up to 10 seats across dual pods).
           </p>
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -408,7 +408,7 @@ export default function CorporateRetainersPage() {
               </div>
 
               <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.5, margin: 0 }}>
-                Covers up to 10 team members (about $350 per person/month). Includes 10 app accounts, a monthly live session, and quarterly progress reviews. Cancel with 30 days&apos; notice.
+                Covers up to 10 team members ($350/person/mo). Includes 10 app accounts, monthly live coaching in two dedicated 5-person pods (max 6 per live room), and quarterly progress reviews. Cancel with 30 days&apos; notice.
               </p>
 
               <div style={{ marginTop: 'auto' }}>
@@ -469,7 +469,7 @@ export default function CorporateRetainersPage() {
               </div>
 
               <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.5, margin: 0 }}>
-                Full 12-month access for 10 team members (about $292 per person/month). Includes 12 live coaching sessions and an on-site workspace assessment.
+                Full 12-month access for up to 10 team members ($292/person/mo). Includes monthly dual-pod live studio sessions (max 5–6 athletes per live room) plus an annual live virtual movement &amp; workstation clinic (Greater Boston on-site optional).
               </p>
 
               <div style={{ marginTop: 'auto' }}>
@@ -520,7 +520,7 @@ export default function CorporateRetainersPage() {
               REQUEST A TEAM PLAN
             </h2>
             <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 14, color: 'var(--gray)', margin: 0 }}>
-              Need more than 10 memberships or on-site support? Tell us what your team needs and we&apos;ll follow up.
+              Choose a 4-seat pod, 6-seat small group, or 10-seat dual-pod team plan. Tell us your team goals and we&apos;ll follow up within 1 business day.
             </p>
           </div>
 

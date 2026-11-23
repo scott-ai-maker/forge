@@ -417,7 +417,7 @@ export default function PackagesPage() {
               Live 1-on-1 &amp; Team Video Studio Coaching
             </h2>
             <p style={{ margin: '6px 0 0', color: '#CBD5E1', fontSize: '0.92rem', lineHeight: 1.55 }}>
-              Train live with Coach Gordon in the encrypted 60fps Forge Live Video Studio featuring real-time telestrator form markups, slow-motion replay analysis, ERAP safety verification, and instant NASM OPT™ updates. Book single 1:1 sessions ($180), discounted 4-pack ($660) or 8-pack ($1,240) blocks on nights &amp; weekends, or enroll up to 10 leaders in our multi-athlete Team Live Studio program ($3,500/mo · $35,000/yr).
+              Train live with Coach Gordon in the encrypted 60fps Forge Live Video Studio featuring real-time telestrator form markups, slow-motion replay analysis, ERAP safety verification, and instant NASM OPT™ updates. Book single 1:1 sessions ($180), discounted 4-pack ($660) or 8-pack ($1,240) blocks on nights &amp; weekends, or enroll a small-group team pod (4–6 live athletes per room, or up to 10 seats via dual 5-person pods · $1,600–$3,500/mo).
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

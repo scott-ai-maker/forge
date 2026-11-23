@@ -34,6 +34,11 @@ export function shouldAutoOpenStudioGreenRoom(sessionStorageKey: string): boolea
     if (params.get('skipGreenRoom') === '1') return false
     if (window.location.pathname.startsWith('/test-harness/')) return false
     if (typeof navigator !== 'undefined' && navigator.webdriver) return false
+    // On phones (<768px), skip auto-opening the full desktop Green Room modal so participants
+    // land directly in the FaceTime-style call stage (still accessible anytime via Tools -> Green Room).
+    if (typeof window.innerWidth === 'number' && window.innerWidth > 0 && window.innerWidth < 768) {
+      return false
+    }
     if (window.sessionStorage.getItem(sessionStorageKey) === 'joined') return false
     return true
   } catch {

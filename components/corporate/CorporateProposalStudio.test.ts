@@ -27,50 +27,36 @@ describe('CorporateProposalStudio & Financial Engine', () => {
       expect(monthly.perSeatMonthlyEffective).toBe(350)
     })
 
-    it('accurately calculates the 5-person team plan', () => {
-      const result = computeCorporateFinancials(5, 'annual')
-      expect(result.monthlyInvestment).toBe(2000)
-      expect(result.annualInvestment).toBe(20000)
-      expect(result.annualSavings).toBe(4000)
+    it('accurately calculates the 4-person small team pod', () => {
+      const result = computeCorporateFinancials(4, 'annual')
+      expect(result.monthlyInvestment).toBe(1600)
+      expect(result.annualInvestment).toBe(16000)
+      expect(result.annualSavings).toBe(3200)
       expect(result.perSeatMonthlyEffective).toBe(333)
     })
 
-    it('accurately calculates the 25-person team plan', () => {
-      const result = computeCorporateFinancials(25, 'annual')
-      expect(result.monthlyInvestment).toBe(7500)
-      expect(result.annualInvestment).toBe(75000)
-      expect(result.annualSavings).toBe(15000)
-      expect(result.perSeatMonthlyEffective).toBe(250)
+    it('accurately calculates the 6-person executive small group', () => {
+      const result = computeCorporateFinancials(6, 'annual')
+      expect(result.monthlyInvestment).toBe(2200)
+      expect(result.annualInvestment).toBe(22000)
+      expect(result.annualSavings).toBe(4400)
+      expect(result.perSeatMonthlyEffective).toBe(306)
     })
 
-    it('accurately calculates the 50-person organization plan', () => {
-      const result = computeCorporateFinancials(50, 'annual')
-      expect(result.monthlyInvestment).toBe(13500)
-      expect(result.annualInvestment).toBe(135000)
-      expect(result.annualSavings).toBe(27000)
-      expect(result.perSeatMonthlyEffective).toBe(225)
+    it('dynamically models custom seat counts within supported 1–10 capacity', () => {
+      const custom8 = computeCorporateFinancials(8, 'monthly')
+      expect(custom8.seats).toBe(8)
+      expect(custom8.monthlyInvestment).toBe(8 * 350) // 2800
+      expect(custom8.annualInvestment).toBe(28000)
+      expect(custom8.perSeatMonthlyEffective).toBe(350)
     })
 
-    it('dynamically models custom seat counts with appropriate sliding scales', () => {
-      const custom12 = computeCorporateFinancials(12, 'monthly')
-      expect(custom12.seats).toBe(12)
-      expect(custom12.monthlyInvestment).toBe(12 * 350) // 4200
-      expect(custom12.annualInvestment).toBe(42000)
-      expect(custom12.perSeatMonthlyEffective).toBe(350)
-
-      const custom40 = computeCorporateFinancials(40, 'annual')
-      expect(custom40.seats).toBe(40)
-      expect(custom40.monthlyInvestment).toBe(40 * 270) // 10800
-      expect(custom40.annualInvestment).toBe(108000)
-      expect(custom40.perSeatMonthlyEffective).toBe(225)
-    })
-
-    it('clamps negative or extreme seat counts safely', () => {
+    it('clamps negative or over-capacity seat counts to current 1–10 supported limit', () => {
       const low = computeCorporateFinancials(-5, 'annual')
       expect(low.seats).toBe(1)
 
-      const high = computeCorporateFinancials(500, 'annual')
-      expect(high.seats).toBe(250)
+      const high = computeCorporateFinancials(50, 'annual')
+      expect(high.seats).toBe(10)
     })
   })
 
@@ -101,23 +87,27 @@ describe('CorporateProposalStudio & Financial Engine', () => {
   })
 
   describe('getProposalDeliverablesList', () => {
-    it('uses team-first labels for the organization plan sizes', () => {
+    it('exposes only truly supportable small-group corporate cohorts (4, 6, and 10 dual-pod seats)', () => {
       expect(CORPORATE_TIER_PRESETS.map(preset => preset.name)).toEqual([
-        'Small Team',
-        'Team Plan',
-        'Growing Team',
-        'Organization Plan',
+        'Small Team Pod',
+        'Executive Small Group',
+        'Dual-Pod Team',
       ])
+      expect(CORPORATE_TIER_PRESETS.map(preset => preset.seats)).toEqual([4, 6, 10])
     })
 
-    it('returns 5 core deliverables for monthly and adds annual clinic bonus for annual agreements', () => {
+    it('returns 5 core deliverables for monthly (dual-pod for >6 seats) and adds virtual clinic for annual agreements', () => {
       const monthlyDeliverables = getProposalDeliverablesList(10, 'monthly')
       expect(monthlyDeliverables.length).toBe(5)
       expect(monthlyDeliverables[0].title).toContain('10 app memberships')
+      expect(monthlyDeliverables[1].title).toContain('2 pods of up to 5')
+
+      const smallGroupDeliverables = getProposalDeliverablesList(6, 'monthly')
+      expect(smallGroupDeliverables[1].title).toContain('up to 6 live')
 
       const annualDeliverables = getProposalDeliverablesList(10, 'annual')
       expect(annualDeliverables.length).toBe(6)
-      expect(annualDeliverables[5].title).toContain('On-site movement and ergonomics session')
+      expect(annualDeliverables[5].title).toContain('Annual virtual movement & ergonomics clinic')
     })
   })
 

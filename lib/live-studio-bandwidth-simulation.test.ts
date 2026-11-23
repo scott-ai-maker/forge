@@ -436,4 +436,38 @@ describe('Forge Athletic Live Studio — Comprehensive Multi-Bandwidth Client Si
     expect(evaluateNetworkQuality({ rttMs: 50, videoFreezeCountDelta: 1, framesPerSecond: 15 })).toBe('constrained')
     expect(evaluateNetworkQuality({ rttMs: 50, videoFreezeCountDelta: 3, framesPerSecond: 2 })).toBe('critical')
   })
+
+  it('Scenario 13 (iPhone Late-Camera Permission & Polite-Peer Renegotiation): Athlete attaches camera after initial handshake -> Coach auto-renegotiates sendrecv', async () => {
+    const { bus, coachBridge, athleteBridge, coachPc } = createPair()
+    coachPc.setNetworkProfile(REAL_WORLD_NETWORK_PROFILES.home_wifi_good_lte)
+
+    // Initial presence handshake completes BEFORE Athlete grants iOS camera permission
+    await athleteBridge.announcePresence()
+    for (let i = 0; i < 6; i += 1) {
+      await Promise.resolve()
+    }
+    const offersBeforeCamera = coachPc.createOfferCalls.length
+    expect(offersBeforeCamera).toBeGreaterThanOrEqual(1)
+
+    // Simulate Athlete granting iOS camera permission 3s later -> attachLocalStream() runs on polite peer
+    const fakeVideoTrack = { id: 'ios-cam-1', kind: 'video', readyState: 'live', enabled: true } as unknown as MediaStreamTrack
+    const fakeAudioTrack = { id: 'ios-mic-1', kind: 'audio', readyState: 'live', enabled: true } as unknown as MediaStreamTrack
+    const fakeStream = {
+      getTracks: () => [fakeVideoTrack, fakeAudioTrack],
+      getVideoTracks: () => [fakeVideoTrack],
+      getAudioTracks: () => [fakeAudioTrack],
+    } as unknown as MediaStream
+
+    athleteBridge.attachLocalStream(fakeStream)
+    for (let i = 0; i < 6; i += 1) {
+      await Promise.resolve()
+    }
+
+    // Athlete MUST notify Coach via `media-ready` and Coach MUST send a fresh sendrecv offer!
+    expect(bus.sentSignals.some(s => s.type === 'media-ready' && s.senderId === 'athlete-1')).toBe(true)
+    expect(coachPc.createOfferCalls.length).toBeGreaterThan(offersBeforeCamera)
+
+    coachBridge.destroy()
+    athleteBridge.destroy()
+  })
 })

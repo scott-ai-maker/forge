@@ -25,7 +25,7 @@ export default function CorporateProposalStudio({
   initialCompany = 'Apex Capital Partners',
   initialSponsor = 'Program contact',
   initialTitle = 'Wellness program team',
-  initialSeats = 10,
+  initialSeats = 6,
   initialCadence = 'annual',
   isStandalonePage: _isStandalonePage = false,
 }: CorporateProposalStudioProps) {
@@ -360,7 +360,10 @@ export default function CorporateProposalStudio({
               Team size
             </label>
             <span style={{ fontSize: 12, color: 'var(--gray)' }}>
-              Selected: <strong style={{ color: '#FFF' }}>{seats} people</strong>
+              Selected: <strong style={{ color: '#FFF' }}>{seats} people</strong> ·{' '}
+              <span style={{ color: '#34D399' }}>
+                {seats > 6 ? '2 live pods of up to 5 (max 6/room)' : `1 live pod (max ${seats} in room)`}
+              </span>
             </span>
           </div>
 

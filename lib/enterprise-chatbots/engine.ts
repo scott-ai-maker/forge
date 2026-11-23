@@ -175,13 +175,12 @@ function buildDeterministicExecutiveReply(
 **Prepared for Scott Gordon (Founding Principal, Forge Athletic) · Brief Focus:** ${cleanQuestion}  
 **Live Context:** ${launchStatus} · ${telemetry.waitlistLeadsCount} waitlist leads · ${telemetry.activeAssignedClients} active paying client(s) ($${(telemetry.verifiedMonthlyRecurringRevenueUsd ?? 0).toLocaleString()}/mo verified MRR).
 
-### 1. Recommended Institutional Offer Ladder
-| Cohort Tier | Seats | Annual Investment | Ideal Buyer |
+### 1. Recommended Institutional Offer Ladder (NASM-CPT Small-Group Capacity · Max 6 Live / Room)
+| Cohort Tier | Seats & Live Format | Annual Investment | Ideal Buyer |
 | :--- | :--- | :--- | :--- |
-| **Boutique Syndicate** | 5 Executives | **$20,000 / yr** | Seed/Series A leadership, boutique law/VC partners |
-| **Executive Core** | 10 Executives | **$35,000 / yr** | Series B–D Boston/Cambridge biotech & SaaS leadership |
-| **Partner Cohort** | 25 Leaders | **$75,000 / yr** | Mid-market engineering, biotech & advisory firms |
-| **Enterprise Division** | 50+ Leaders | **$135,000+ / yr** | Multi-site executive & high-travel teams |
+| **Small Team Pod** | 4 Executives (1 live room) | **$16,000 / yr** | Founder teams, boutique law/VC partners |
+| **Executive Small Group** | 6 Executives (1 live room) | **$22,000 / yr** | Series A–C leadership pods seeking hands-on form coaching |
+| **Dual-Pod Team** | 10 Leaders (2 pods of 5 live) | **$35,000 / yr** | Series B–D Boston/Cambridge biotech & SaaS leadership |
 
 ### 2. Copy-Ready Executive Outreach Email (Cambridge / Route 128)
 **Subject:** Executive orthopedic longevity for [Company] leadership (zero real-estate overhead)
@@ -475,12 +474,11 @@ Which tier are you leaning toward—**Core Lab ($49/mo)**, **Plus ($99/mo)**, or
   }
 
   if (recommendedTier === 'corporate') {
-    return `**Forge Athletic Corporate Leadership Retainers** are built for busy executive, biotech, tech, and remote teams who need clinical strength and orthopedic longevity without losing hours commuting to a gym:
+    return `**Forge Athletic Corporate Small-Group Retainers** are built for busy executive, biotech, tech, and remote teams who need clinical strength and orthopedic longevity without losing hours commuting to a gym (live video sessions stay capped at **6 athletes per room** so Coach Gordon can actively coach every rep):
 
-- **Boutique Syndicate (5 seats):** **$20,000 / yr**
-- **Executive Core (10 seats):** **$35,000 / yr**
-- **Partner Cohort (25 seats):** **$75,000 / yr**
-- **Enterprise Division (50+ seats):** **$135,000+ / yr**
+- **Small Team Pod (4 seats · 1 live room):** **$1,600 / mo** or **$16,000 / yr**
+- **Executive Small Group (6 seats · 1 live room):** **$2,200 / mo** or **$22,000 / yr**
+- **Dual-Pod Team (10 seats · 2 pods of 5 live):** **$3,500 / mo** or **$35,000 / yr**
 
 Every seat includes individualized **5-Phase NASM OPT™** periodization, **local in-browser 33-point posture screening** (zero cloud video uploads, HIPAA-aligned safeguards), travel/hotel adaptations, and quarterly leadership progress reviews. Roughly how many team members are you looking to support?`
   }

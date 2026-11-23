@@ -418,6 +418,17 @@ function mapBackgroundModeToInt(mode: StudioBackgroundMode): number {
   }
 }
 
+function detectMobileOrIosWebKit(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const isIos =
+    /iPad|iPhone|iPod/i.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+  const isNarrow = typeof window.innerWidth === 'number' && window.innerWidth > 0 && window.innerWidth < 768
+  return isIos || isMobileUa || isNarrow
+}
+
 export function useStudioVideoPipeline(
   options: UseStudioVideoPipelineOptions = {}
 ): StudioVideoPipelineController {
@@ -426,11 +437,15 @@ export function useStudioVideoPipeline(
     initialFacingMode = 'user',
     effectiveTier = 'hd',
     defaultLightingPreset = 'studio_natural',
-    defaultBackgroundMode = 'bokeh_blur',
+    defaultBackgroundMode,
     defaultFramingGuide = 'off',
     customBackdropUrl = null,
     ecoMode = false,
   } = options
+
+  const isMobileDirectVideo = useMemo(() => detectMobileOrIosWebKit(), [])
+  const resolvedDefaultBackgroundMode: StudioBackgroundMode =
+    defaultBackgroundMode ?? (isMobileDirectVideo ? 'off' : 'bokeh_blur')
 
   const [rawStream, setRawStream] = useState<MediaStream | null>(null)
   const [outputStream, setOutputStream] = useState<MediaStream | null>(null)
@@ -443,7 +458,7 @@ export function useStudioVideoPipeline(
   const [lightingPreset, setLightingPreset] =
     useState<StudioLightingPresetId>(defaultLightingPreset)
   const [backgroundMode, setBackgroundMode] =
-    useState<StudioBackgroundMode>(defaultBackgroundMode)
+    useState<StudioBackgroundMode>(resolvedDefaultBackgroundMode)
   const [framingGuide, setFramingGuide] =
     useState<StudioFramingGuideMode>(defaultFramingGuide)
   const [lowLightBoostEnabled, setLowLightBoostEnabled] = useState(false)
@@ -501,6 +516,8 @@ export function useStudioVideoPipeline(
   isCameraActiveRef.current = isCameraActive
   const ecoModeRef = useRef(ecoMode)
   ecoModeRef.current = ecoMode
+  const customBackdropUrlRef = useRef(customBackdropUrl)
+  customBackdropUrlRef.current = customBackdropUrl
 
   const guardrailStateRef = useRef<PerformanceGuardrailSample>({
     emaFrameRenderMs: 12,
@@ -678,6 +695,18 @@ export function useStudioVideoPipeline(
     sourceVideo.autoplay = true
     sourceVideo.playsInline = true
     sourceVideo.muted = true
+    sourceVideo.setAttribute('playsinline', '')
+    sourceVideo.setAttribute('webkit-playsinline', '')
+    // Attach invisibly to DOM so iOS Safari / WKWebView never suspends off-DOM video decoding
+    sourceVideo.style.position = 'fixed'
+    sourceVideo.style.width = '1px'
+    sourceVideo.style.height = '1px'
+    sourceVideo.style.opacity = '0.001'
+    sourceVideo.style.pointerEvents = 'none'
+    sourceVideo.style.zIndex = '-1'
+    try {
+      document.body?.appendChild(sourceVideo)
+    } catch {}
     sourceVideoRef.current = sourceVideo
 
     const canvas = document.createElement('canvas')
@@ -1120,6 +1149,9 @@ export function useStudioVideoPipeline(
       if (sourceVideoRef.current) {
         sourceVideoRef.current.pause()
         sourceVideoRef.current.srcObject = null
+        try {
+          sourceVideoRef.current.remove()
+        } catch {}
         sourceVideoRef.current = null
       }
       processingCanvasRef.current = null
@@ -1286,10 +1318,14 @@ export function useStudioVideoPipeline(
         void sourceVideoRef.current.play().catch(() => {})
       }
 
-      // Build outgoing WebRTC MediaStream from canvas.captureStream(30) + raw 48kHz isolated audio track
+      // On iOS / mobile WebKit with no virtual background active, transmit the native hardware
+      // camera stream directly (Apple VideoToolbox H.264) to avoid WKWebView canvas.captureStream stalls.
       let finalOutStream: MediaStream = acquiredStream
+      const needsCanvasCompositing =
+        !isMobileDirectVideo || backgroundModeRef.current !== 'off' || Boolean(customBackdropUrlRef.current)
       const canvas = processingCanvasRef.current
       const canCaptureCanvas =
+        needsCanvasCompositing &&
         canvas &&
         typeof canvas.captureStream === 'function' &&
         typeof MediaStream !== 'undefined'
@@ -1315,6 +1351,8 @@ export function useStudioVideoPipeline(
         } catch {
           finalOutStream = acquiredStream
         }
+      } else {
+        setIsPipelineRendering(false)
       }
 
       outputStreamRef.current = finalOutStream
@@ -1338,7 +1376,7 @@ export function useStudioVideoPipeline(
         component_context: 'useStudioVideoPipeline',
       })
     }
-  }, [enabled, facingMode, stopAllManagedStreams])
+  }, [enabled, facingMode, isMobileDirectVideo, stopAllManagedStreams])
 
   // Start hardware pipeline on mount / facingMode change, and cleanly release camera/mic
   // on Android hardware back button, app switcher minimize, or pagehide
@@ -1384,6 +1422,47 @@ export function useStudioVideoPipeline(
       void applyCameraBandwidthConstraints(rawStreamRef.current, effectiveTier)
     }
   }, [effectiveTier])
+
+  // On mobile/iOS WebKit, toggle between direct hardware camera stream (default, zero captureStream stall)
+  // and canvas.captureStream(30) only when the user explicitly enables a virtual background or bokeh.
+  useEffect(() => {
+    if (!isMobileDirectVideo || !rawStreamRef.current) return
+    const needsCanvas = backgroundMode !== 'off' || Boolean(customBackdropUrl)
+    const raw = rawStreamRef.current
+
+    if (!needsCanvas) {
+      if (capturedCanvasStreamRef.current) {
+        capturedCanvasStreamRef.current.getTracks().forEach(t => {
+          try {
+            t.stop()
+          } catch {}
+        })
+        capturedCanvasStreamRef.current = null
+      }
+      if (outputStreamRef.current !== raw) {
+        outputStreamRef.current = raw
+        setOutputStream(raw)
+        setIsPipelineRendering(false)
+      }
+      return
+    }
+
+    const canvas = processingCanvasRef.current
+    if (canvas && typeof canvas.captureStream === 'function' && typeof MediaStream !== 'undefined' && !capturedCanvasStreamRef.current) {
+      try {
+        const canvasStream = canvas.captureStream(30)
+        const canvasVideoTracks = canvasStream.getVideoTracks()
+        if (canvasVideoTracks.length > 0) {
+          capturedCanvasStreamRef.current = canvasStream
+          const composed = new MediaStream([...canvasVideoTracks, ...raw.getAudioTracks()])
+          outputStreamRef.current = composed
+          setOutputStream(composed)
+        }
+      } catch {
+        // Keep direct raw stream if captureStream fails on device
+      }
+    }
+  }, [isMobileDirectVideo, backgroundMode, customBackdropUrl])
 
   const toggleCamera = useCallback(() => {
     const rawTracks = rawStreamRef.current?.getVideoTracks() ?? []

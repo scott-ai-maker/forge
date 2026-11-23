@@ -30,8 +30,8 @@ export default async function CorporateProposalPage({ searchParams }: CorporateP
   const companyParam = typeof params.company === 'string' ? params.company : 'Your organization'
   const sponsorParam = typeof params.sponsor === 'string' ? params.sponsor : 'Program contact'
   const titleParam = typeof params.title === 'string' ? params.title : 'Wellness program team'
-  const seatsParam = typeof params.seats === 'string' ? parseInt(params.seats, 10) : 10
-  const safeSeats = isNaN(seatsParam) || seatsParam < 1 ? 10 : seatsParam
+  const seatsParam = typeof params.seats === 'string' ? parseInt(params.seats, 10) : 6
+  const safeSeats = isNaN(seatsParam) || seatsParam < 1 ? 6 : Math.min(10, seatsParam)
   const cadenceParam: CorporateCadence = params.cadence === 'monthly' ? 'monthly' : 'annual'
 
   return (

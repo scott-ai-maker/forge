@@ -182,9 +182,25 @@ export default function LiveVideoCameraHud({
 }: LiveVideoCameraHudProps) {
   const router = useRouter()
   const [layout, setLayout] = useState<VideoHudLayout>('split')
+  const [isMobile, setIsMobile] = useState<boolean>(false)
+  const [showMobileTools, setShowMobileTools] = useState<boolean>(false)
   const [isStageSwapped, setIsStageSwapped] = useState(false)
   const [showPlumbLine, setShowPlumbLine] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Detect iPhone / mobile viewport and default to FaceTime-style Picture-in-Picture layout
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (mobile) {
+        setLayout(prev => (prev === 'split' ? 'pip' : prev))
+      }
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // ── Team Session State (Athlete View) ──
   const [teamCircuitTimer, setTeamCircuitTimer] = useState<TeamCircuitTimerData | null>(null)
@@ -1121,123 +1137,150 @@ export default function LiveVideoCameraHud({
             onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
           />
 
-          {/* Pre-Call Green Room Mirror & Framing Check Trigger */}
-          <button
-            type="button"
-            onClick={() => setShowGreenRoom(true)}
-            data-testid="open-green-room-btn"
-            title="Open Green Room Mirror, Lighting, Background & Mic Check"
-            style={{
-              padding: '4px 9px',
-              background: 'rgba(16, 185, 129, 0.14)',
-              border: '1px solid rgba(52, 211, 153, 0.42)',
-              color: '#34D399',
-              borderRadius: 6,
-              fontSize: 11,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <ForgeIcon name="sparkles" size={12} tone="emerald" />
-            <span>Green Room</span>
-          </button>
-
-          {/* Still Camera Mode Guidance Badge */}
-          <button
-            type="button"
-            onClick={() => setShowStillCameraModal(true)}
-            data-testid="still-camera-badge-btn"
-            title="Still Camera Mode: Guide to disable Apple Center Stage / Auto-Framing"
-            style={{
-              padding: '4px 9px',
-              background: 'rgba(212,175,55,0.14)',
-              border: '1px solid rgba(212,175,55,0.4)',
-              color: 'var(--gold-lt)',
-              borderRadius: 6,
-              fontSize: 11,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <GaaIcon name="camera" size={12} tone="gold" />
-            <span>Still Camera</span>
-          </button>
-
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: 2 }}>
-            <button
-              type="button"
-              onClick={() => setLayout('split')}
-              style={{
-                background: layout === 'split' ? 'var(--gold)' : 'transparent',
-                color: layout === 'split' ? '#0A0E18' : 'var(--gray)',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: 4,
-                fontSize: 10,
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              SPLIT
-            </button>
-            <button
-              type="button"
-              onClick={() => setLayout('pip')}
-              style={{
-                background: layout === 'pip' ? 'var(--gold)' : 'transparent',
-                color: layout === 'pip' ? '#0A0E18' : 'var(--gray)',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: 4,
-                fontSize: 10,
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              PiP
-            </button>
-            <button
-              type="button"
-              onClick={() => setLayout('focus')}
-              style={{
-                background: layout === 'focus' ? 'var(--gold)' : 'transparent',
-                color: layout === 'focus' ? '#0A0E18' : 'var(--gray)',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: 4,
-                fontSize: 10,
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              STAGE
-            </button>
+          {/* Compact Phone Swap Button */}
+          {isMobile && (
             <button
               type="button"
               onClick={() => setIsStageSwapped(prev => !prev)}
               style={{
-                background: isStageSwapped ? 'rgba(59,130,246,0.3)' : 'transparent',
-                color: isStageSwapped ? '#60A5FA' : 'var(--gray)',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: 4,
-                fontSize: 10,
+                minHeight: 36,
+                padding: '4px 10px',
+                background: isStageSwapped ? 'rgba(59,130,246,0.28)' : 'rgba(255,255,255,0.08)',
+                color: isStageSwapped ? '#93C5FD' : '#E2E8F0',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 8,
+                fontSize: 11,
                 fontWeight: 800,
                 cursor: 'pointer',
               }}
-              title="Swap Main Stage between Athlete and Coach"
+              title="Swap Main Stage between Coach and You"
             >
-              ⇄ SWAP
+              ⇄ Swap
             </button>
-          </div>
+          )}
+
+          {/* Desktop-only top bar studio pills (accessible via Tools drawer on phones) */}
+          {!isMobile && (
+            <>
+              {/* Pre-Call Green Room Mirror & Framing Check Trigger */}
+              <button
+                type="button"
+                onClick={() => setShowGreenRoom(true)}
+                data-testid="open-green-room-btn"
+                title="Open Green Room Mirror, Lighting, Background & Mic Check"
+                style={{
+                  padding: '4px 9px',
+                  background: 'rgba(16, 185, 129, 0.14)',
+                  border: '1px solid rgba(52, 211, 153, 0.42)',
+                  color: '#34D399',
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <ForgeIcon name="sparkles" size={12} tone="emerald" />
+                <span>Green Room</span>
+              </button>
+
+              {/* Still Camera Mode Guidance Badge */}
+              <button
+                type="button"
+                onClick={() => setShowStillCameraModal(true)}
+                data-testid="still-camera-badge-btn"
+                title="Still Camera Mode: Guide to disable Apple Center Stage / Auto-Framing"
+                style={{
+                  padding: '4px 9px',
+                  background: 'rgba(212,175,55,0.14)',
+                  border: '1px solid rgba(212,175,55,0.4)',
+                  color: 'var(--gold-lt)',
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <GaaIcon name="camera" size={12} tone="gold" />
+                <span>Still Camera</span>
+              </button>
+
+              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: 2 }}>
+                <button
+                  type="button"
+                  onClick={() => setLayout('split')}
+                  style={{
+                    background: layout === 'split' ? 'var(--gold)' : 'transparent',
+                    color: layout === 'split' ? '#0A0E18' : 'var(--gray)',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  SPLIT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLayout('pip')}
+                  style={{
+                    background: layout === 'pip' ? 'var(--gold)' : 'transparent',
+                    color: layout === 'pip' ? '#0A0E18' : 'var(--gray)',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  PiP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLayout('focus')}
+                  style={{
+                    background: layout === 'focus' ? 'var(--gold)' : 'transparent',
+                    color: layout === 'focus' ? '#0A0E18' : 'var(--gray)',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  STAGE
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsStageSwapped(prev => !prev)}
+                  style={{
+                    background: isStageSwapped ? 'rgba(59,130,246,0.3)' : 'transparent',
+                    color: isStageSwapped ? '#60A5FA' : 'var(--gray)',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                  title="Swap Main Stage between Athlete and Coach"
+                >
+                  ⇄ SWAP
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -1278,21 +1321,42 @@ export default function LiveVideoCameraHud({
               </p>
             </div>
           </div>
-          {peerLatencyMs != null && (
-            <span
-              style={{
-                fontSize: 10.5,
-                fontFamily: 'monospace',
-                color: '#34D399',
-                background: 'rgba(0,0,0,0.45)',
-                padding: '2px 8px',
-                borderRadius: 4,
-                border: '1px solid rgba(52,211,153,0.3)',
-              }}
-            >
-              ● {peerLatencyMs}ms RTT
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {coachInStudio && (
+              <button
+                type="button"
+                onClick={handleReconnectStream}
+                style={{
+                  minHeight: 36,
+                  padding: '5px 12px',
+                  borderRadius: 999,
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  border: 'none',
+                  color: '#04070E',
+                  fontSize: 11,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                }}
+              >
+                Reconnect Video
+              </button>
+            )}
+            {peerLatencyMs != null && (
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontFamily: 'monospace',
+                  color: '#34D399',
+                  background: 'rgba(0,0,0,0.45)',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  border: '1px solid rgba(52,211,153,0.3)',
+                }}
+              >
+                ● {peerLatencyMs}ms RTT
+              </span>
+            )}
+          </div>
         </div>
       )}
 
@@ -2945,19 +3009,20 @@ export default function LiveVideoCameraHud({
         </div>
       )}
 
-      {/* ── Bottom HUD Control Bar (Microsoft Teams Unified Meeting Command Bar) ── */}
+      {/* ── Bottom HUD Control Bar (Phone-First FaceTime Dock on <768px, Full Studio Dock on Desktop) ── */}
       <div className="teams-command-bar">
-        {/* Dock 1: Hardware & AV Transmission */}
-        <div className="teams-dock-cluster">
+        {/* Dock 1: Primary Hardware & Call Controls */}
+        <div className="teams-dock-cluster" style={isMobile ? { width: '100%', justifyContent: 'space-around' } : undefined}>
           <button
             type="button"
             onClick={toggleMic}
             style={{
-              padding: '6px 12px',
-              background: isMicMuted ? '#EF4444' : 'rgba(255,255,255,0.08)',
+              minHeight: isMobile ? 46 : undefined,
+              padding: isMobile ? '10px 14px' : '6px 12px',
+              background: isMicMuted ? '#EF4444' : 'rgba(255,255,255,0.1)',
               color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 6,
+              border: '1px solid rgba(255,255,255,0.16)',
+              borderRadius: isMobile ? 999 : 6,
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
@@ -2967,19 +3032,20 @@ export default function LiveVideoCameraHud({
               transition: 'all 0.15s ease',
             }}
           >
-            <GaaIcon name={isMicMuted ? 'mic-off' : 'mic'} size={13} tone="inherit" />
-            <span>{isMicMuted ? 'Unmute' : 'Mic On'}</span>
+            <GaaIcon name={isMicMuted ? 'mic-off' : 'mic'} size={isMobile ? 16 : 13} tone="inherit" />
+            <span>{isMicMuted ? 'Unmute' : 'Mic'}</span>
           </button>
 
           <button
             type="button"
             onClick={toggleCamera}
             style={{
-              padding: '6px 12px',
-              background: isCameraActive ? 'rgba(255,255,255,0.08)' : '#EF4444',
+              minHeight: isMobile ? 46 : undefined,
+              padding: isMobile ? '10px 14px' : '6px 12px',
+              background: isCameraActive ? 'rgba(255,255,255,0.1)' : '#EF4444',
               color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 6,
+              border: '1px solid rgba(255,255,255,0.16)',
+              borderRadius: isMobile ? 999 : 6,
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
@@ -2989,20 +3055,22 @@ export default function LiveVideoCameraHud({
               transition: 'all 0.15s ease',
             }}
           >
-            <GaaIcon name={isCameraActive ? 'video-studio' : 'stop'} size={13} tone="inherit" />
-            <span>{isCameraActive ? 'Cam On' : 'Cam Off'}</span>
+            <GaaIcon name={isCameraActive ? 'video-studio' : 'stop'} size={isMobile ? 16 : 13} tone="inherit" />
+            <span>{isCameraActive ? 'Cam' : 'Cam Off'}</span>
           </button>
 
           <button
             type="button"
             onClick={flipCamera}
             style={{
-              padding: '6px 10px',
-              background: 'rgba(255,255,255,0.08)',
+              minHeight: isMobile ? 46 : undefined,
+              padding: isMobile ? '10px 13px' : '6px 10px',
+              background: 'rgba(255,255,255,0.1)',
               color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 6,
+              border: '1px solid rgba(255,255,255,0.16)',
+              borderRadius: isMobile ? 999 : 6,
               fontSize: 12,
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -3010,28 +3078,52 @@ export default function LiveVideoCameraHud({
             }}
             title="Flip Camera"
           >
-            <GaaIcon name="rotate-ccw" size={13} tone="inherit" />
+            <GaaIcon name="rotate-ccw" size={isMobile ? 15 : 13} tone="inherit" />
             <span>Flip</span>
           </button>
 
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            style={{
-              padding: '6px 10px',
-              background: 'rgba(255,255,255,0.08)',
-              color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 6,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Toggle Fullscreen"
-          >
-            <GaaIcon name={isFullscreen ? 'chevron-down' : 'external-link'} size={13} tone="inherit" />
-          </button>
+          {isMobile ? (
+            <button
+              type="button"
+              onClick={() => setShowMobileTools(prev => !prev)}
+              style={{
+                minHeight: 46,
+                padding: '10px 13px',
+                background: showMobileTools ? 'rgba(212,175,55,0.24)' : 'rgba(255,255,255,0.1)',
+                color: showMobileTools ? 'var(--gold-lt)' : '#FFFFFF',
+                border: showMobileTools ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.16)',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <ForgeIcon name="sparkles" size={14} tone={showMobileTools ? 'gold' : 'inherit'} />
+              <span>Tools</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.08)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 6,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Toggle Fullscreen"
+            >
+              <GaaIcon name={isFullscreen ? 'chevron-down' : 'external-link'} size={13} tone="inherit" />
+            </button>
+          )}
 
           {/* Bottom Dock Exit Studio Button */}
           <button
@@ -3043,11 +3135,12 @@ export default function LiveVideoCameraHud({
             }}
             data-testid="dock-live-hud-exit-btn"
             style={{
-              padding: '6px 12px',
-              background: 'rgba(239, 68, 68, 0.18)',
-              color: '#FCA5A5',
-              border: '1px solid rgba(239, 68, 68, 0.45)',
-              borderRadius: 6,
+              minHeight: isMobile ? 46 : undefined,
+              padding: isMobile ? '10px 14px' : '6px 12px',
+              background: isMobile ? '#DC2626' : 'rgba(239, 68, 68, 0.18)',
+              color: isMobile ? '#FFFFFF' : '#FCA5A5',
+              border: '1px solid rgba(239, 68, 68, 0.5)',
+              borderRadius: isMobile ? 999 : 6,
               fontSize: 12,
               fontWeight: 800,
               cursor: 'pointer',
@@ -3058,12 +3151,13 @@ export default function LiveVideoCameraHud({
             }}
             title={isCoach ? 'Exit Cockpit' : 'Exit Studio'}
           >
-            <GaaIcon name="close" size={12} tone="ruby" />
-            <span>{isCoach ? 'Exit Cockpit' : 'Exit Studio'}</span>
+            <GaaIcon name="close" size={13} tone={isMobile ? 'white' : 'ruby'} />
+            <span>{isMobile ? 'End' : isCoach ? 'Exit Cockpit' : 'Exit Studio'}</span>
           </button>
         </div>
 
-        {/* Dock 2: Kinematics & Biomechanical Diagnostics */}
+        {/* Dock 2: Kinematics & Biomechanical Diagnostics (Collapsed behind Tools toggle on phones) */}
+        {(!isMobile || showMobileTools) && (
         <div className="teams-dock-cluster">
           {/* In-Call Collapsible Studio FX Pill (WebGL LUT, Bokeh/Backdrop Segmentation & Framing) */}
           <StudioVideoControls
@@ -3212,9 +3306,10 @@ export default function LiveVideoCameraHud({
             </button>
           )}
         </div>
+        )}
 
         {/* Dock 3: Pacing & Tactical Load (when handlers provided) */}
-        {(onToggleMetronome || onOpenPlateCalc) && (
+        {(!isMobile || showMobileTools) && (onToggleMetronome || onOpenPlateCalc) && (
           <div className="teams-dock-cluster">
             {onToggleMetronome && (
               <button

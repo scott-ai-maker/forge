@@ -33,11 +33,10 @@ FORGE ATHLETIC — AUTHORITATIVE ENTERPRISE DOSSIER (2026–2029)
   * Modular Add-Ons: Technique Video Review Pack ($49 / 4 reviews), Nutrition Blueprint ($39 / 60 days), Travel Training Pass ($19 / 30 days).
   * 1:1 Live WebRTC Private Sessions: Movement Screen & Kinetic Restoration ($159), Single 60-min ($180), 4-Pack ($660 / $165 ea), 8-Pack ($1,240 / $155 ea).
   * High-Ticket Private Retainers: Performance Protocol ($349/mo), Hybrid Concierge ($649/mo, 4h SLA), Private Master Advisory ($1,495/mo, cap 15).
-  * B2B Corporate Leadership Retainers:
-    - Boutique Syndicate (5 seats): $20,000/yr
-    - Executive Core (10 seats): $35,000/yr
-    - Partner Cohort (25 seats): $75,000/yr
-    - Enterprise Division (50+ seats): $135,000+/yr
+  * B2B Corporate Small-Group Retainers (strictly ≤6 live athletes per Live Studio room to honor NASM-CPT small-group scope & Star P2P video quality):
+    - Small Team Pod (4 seats · 1 live room): $1,600/mo or $16,000/yr
+    - Executive Small Group (6 seats · 1 live room): $2,200/mo or $22,000/yr
+    - Dual-Pod Team (10 seats · 2 dedicated 5-person live pods): $3,500/mo or $35,000/yr
 - Founding Launch Campaign: Target Go-Live Monday, January 4, 2027 (6:00 AM EST). Promo Code HOLIDAY25: 25% Continuous Tier Rate Lock + complimentary 60-min Kickoff Movement Screen (redeemable through Jan 31, 2027).
 - 3-Year Financial Targets (Asset-Light 0% Commercial Lease):
   * Year 1 (2026–2027): $585,000 ARR | $130,000 OPEX | $455,000 EBITDA (77.8%)
@@ -75,30 +74,30 @@ export const EXECUTIVE_BOT_PROFILES: Record<ExecutiveBotId, ExecutiveBotProfile>
     voiceStyle:
       'Direct, commercially sharp, consultative closer who speaks the language of CFOs, VPs of People, and procurement teams—zero fluff, always anchoring to business outcomes and low-friction 90-day pilots.',
     accentTone: 'gold',
-    tagline: 'Close $20k–$135k/yr executive wellness cohorts across Boston/Route 128 tech, biotech, and remote leadership teams.',
+    tagline: 'Close $16k–$35k/yr small-group executive wellness pods (4–10 seats, max 6 live per room) across Boston/Route 128 tech, biotech, and remote leadership teams.',
     mission:
       'Build target account lists, executive outreach sequences, CFO-ready ROI business cases, pilot SOWs, and custom corporate proposals.',
-    keyMetricsFocus: ['Corporate ARR ($105k → $1.65M)', '10–50 Seat Retainers', 'Pilot-to-Annual Conversion'],
+    keyMetricsFocus: ['Corporate ARR ($16k–$35k Pods)', '4–10 Seat Small-Group Retainers', 'Pilot-to-Annual Conversion'],
     quickPrompts: [
       {
         id: 'b2b-outreach-biotech',
         label: 'Biotech / Tech VP People Cold Outreach',
         prompt:
-          'Draft a 3-touch executive outreach sequence (email + LinkedIn note + follow-up) targeting VPs of People and CFOs at Series B–D biotech and SaaS firms in Cambridge/Route 128 for our $35,000/yr Executive Core (10-seat) cohort.',
+          'Draft a 3-touch executive outreach sequence (email + LinkedIn note + follow-up) targeting VPs of People and CFOs at Series B–D biotech and SaaS firms in Cambridge/Route 128 for our $22,000/yr Executive Small Group (6-seat) or $35,000/yr Dual-Pod Team (10-seat) cohort.',
         deliverableMode: 'outreach_draft',
       },
       {
         id: 'b2b-roi-memo',
         label: 'CFO Ergonomic & Productivity ROI Memo',
         prompt:
-          'Write a 1-page CFO-ready ROI business case comparing a $35,000/yr Forge Athletic Executive Core retainer against orthopedic absenteeism, executive burnout, and concierge longevity clinics.',
+          'Write a 1-page CFO-ready ROI business case comparing a $22,000–$35,000/yr Forge Athletic small-group corporate retainer against orthopedic absenteeism, executive burnout, and concierge longevity clinics.',
         deliverableMode: 'playbook',
       },
       {
         id: 'b2b-90day-pilot',
         label: '90-Day Paid Pilot SOW Architecture',
         prompt:
-          'Design a structured 90-day paid corporate pilot Statement of Work (SOW) for a 10-executive leadership team that de-risks procurement and converts cleanly into a $75,000/yr Partner Cohort.',
+          'Design a structured 90-day paid corporate pilot Statement of Work (SOW) for a 6-executive leadership pod that de-risks procurement and converts cleanly into a $22,000/yr or $35,000/yr Dual-Pod annual retainer.',
         deliverableMode: 'playbook',
       },
       {
@@ -365,7 +364,7 @@ export function buildExecutiveBotSystemPrompt(
     'b2b-partnerships': `You are the ${profile.name} (${profile.title}) advising Scott Gordon, Founding Principal of Forge Athletic.
 Your mission is to scale B2B Corporate Leadership Retainers from $105k Year 1 ARR to $1.65M Year 3 ARR across Massachusetts tech, biotech, finance, legal, and remote executive teams.
 - Always position Forge Athletic as an asset-light, clinically grounded orthopedic longevity & executive strength platform—never a generic wellness perk.
-- Reference exact pricing tiers ($20k/yr Boutique Syndicate 5 seats, $35k/yr Executive Core 10 seats, $75k/yr Partner Cohort 25 seats, $135k+/yr Enterprise Division 50+ seats).
+- Reference exact supported pricing tiers ($16k/yr Small Team Pod 4 seats, $22k/yr Executive Small Group 6 seats, $35k/yr Dual-Pod Team 10 seats split into two 5-person live rooms). Never pitch >10 seats or >6 concurrent live video participants under current solo NASM-CPT capacity.
 - Emphasize privacy-first compliance (local browser posture screening, zero third-party ad/health pixels, HIPAA-aligned AES-256/RLS safeguards) because enterprise HR and InfoSec teams scrutinize health vendors.
 - Give concrete, non-gimmicky B2B sales assets that respect C-suite time.`,
     'growth-marketing': `You are the ${profile.name} (${profile.title}) advising Scott Gordon, Founding Principal of Forge Athletic.
@@ -377,7 +376,7 @@ Your mission is to build a compounding, zero-tracking-pixel organic growth & soc
 - Keep copy calm, authoritative, clinical, and completely free of hype or bro-fitness tropes.`,
     'cfo-revenue': `You are the ${profile.name} (${profile.title}) advising Scott Gordon, Founding Principal of Forge Athletic.
 Your mission is to protect 70–78% asset-light EBITDA margins while scaling ARR from $585k (Year 1) → $1.85M (Year 2) → $4.75M (Year 3).
-- Always ground financial models in Forge Athletic's exact pricing architecture ($49/mo Core, $99/mo Plus, $299/mo Coach Support capped at 15 seats, $159–$1,240 1:1 WebRTC sessions, $349–$1,495/mo private retainers, $20k–$135k/yr B2B cohorts) and live telemetry snapshot.
+- Always ground financial models in Forge Athletic's exact pricing architecture ($49/mo Core, $99/mo Plus, $299/mo Coach Support capped at 15 seats, $159–$1,240 1:1 WebRTC sessions, $349–$1,495/mo private retainers, $16k–$35k/yr B2B small-group cohorts of 4–10 seats) and live telemetry snapshot.
 - Apply NASM VCS Chapter 2 economics: 3-month minimum commitment protection, downsell retention routing to Core ($49/mo) instead of cancellation, and annual prepay cash acceleration.
 - Flag Stripe ~2.9% merchant fees, MA 6.25% SaaS sales tax (830 CMR 64H.1.7), and W-2 associate coach payroll load (~1.22x–1.28x base with payroll taxes, Workers' Comp, MA PFML).`,
     'enterprise-ops': `You are the ${profile.name} (${profile.title}) advising Scott Gordon, Founding Principal of Forge Athletic.
@@ -431,7 +430,7 @@ CONVERSATION RULES (STRICT):
    - Plus ($99/mo or $899/yr): Busy professionals wanting 4 Form Lab video technique reviews/month, Phase-Synced Nutrition Blueprint, Travel Training Pass, and unlimited Desk Ergonomics Audits.
    - Coach Support ($299/mo, capped at 15 active athletes): Leaders wanting direct 24h SLA messaging/SMS with Coach Gordon, Coach-Certified plans, 8 Form Lab reviews/mo, and quarterly 1:1 live WebRTC strategy reviews.
    - 1:1 Private WebRTC Sessions ($159 Movement Screen; $180 single; $660 4-pack; $1,240 8-pack).
-   - Corporate Leadership Retainers ($20k/yr 5 seats · $35k/yr 10 seats · $75k/yr 25 seats · $135k+/yr 50+ seats).
+   - Corporate Small-Group Retainers ($16k/yr 4-seat Pod · $22k/yr 6-seat Small Group · $35k/yr 10-seat Dual-Pod Team, max 6 live per room).
 3. PRIVACY & CLINICAL SAFETY:
    - Never ask visitors to share personal medical records, SSNs, or sensitive health details in chat.
    - Never diagnose injuries or medical conditions. Clarify that Forge Athletic provides evidence-based NASM personal training (not medical care or physical therapy), and every member completes an automated PAR-Q+ health readiness screening before training.

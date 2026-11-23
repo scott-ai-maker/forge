@@ -52,54 +52,50 @@ export interface CorporateDeliverableItem {
   cadence: string
 }
 
+/**
+ * Maximum corporate cohort seats currently supported by a solo NASM-CPT coach
+ * and Forge Athletic's Coach-Hub Star Topology WebRTC Live Studio.
+ * Live rooms stay capped at ≤6 concurrent athletes (10-seat teams split into two 5-person pods).
+ */
+export const MAX_CONCURRENT_LIVE_STUDIO_ATHLETES = 6
+export const MAX_SUPPORTED_CORPORATE_SEATS = 10
+
 export const CORPORATE_TIER_PRESETS: CorporateTierPreset[] = [
   {
-    id: '5-seats',
-    name: 'Small Team',
-    seats: 5,
-    monthlyPrice: 2000,
-    annualPrice: 20000,
+    id: '4-seats',
+    name: 'Small Team Pod',
+    seats: 4,
+    monthlyPrice: 1600,
+    annualPrice: 16000,
     monthlyPerSeat: 400,
     annualPerSeat: 333,
-    annualSavings: 4000,
-    description: 'Training and wellness support for a team of five.',
-    recommendedFor: 'Small organizations and local teams',
+    annualSavings: 3200,
+    description: 'Single live small-group pod of up to 4 athletes with personalized NASM OPT™ plans and live form coaching.',
+    recommendedFor: 'Founder teams, boutique partners, and tight-knit leadership pods (1 live room)',
+  },
+  {
+    id: '6-seats',
+    name: 'Executive Small Group',
+    seats: 6,
+    monthlyPrice: 2200,
+    annualPrice: 22000,
+    monthlyPerSeat: 367,
+    annualPerSeat: 306,
+    annualSavings: 4400,
+    description: 'Our NASM-CPT small-group sweet spot: up to 6 athletes training together live in one encrypted Team Live Studio session.',
+    recommendedFor: 'Leadership teams of 5–6 seeking individualized live form coaching (1 live room)',
   },
   {
     id: '10-seats',
-    name: 'Team Plan',
+    name: 'Dual-Pod Team',
     seats: 10,
     monthlyPrice: 3500,
     annualPrice: 35000,
     monthlyPerSeat: 350,
     annualPerSeat: 292,
     annualSavings: 7000,
-    description: 'A team program with training resources, monthly workshops, and quarterly progress reviews.',
-    recommendedFor: 'Small and mid-sized organizations',
-  },
-  {
-    id: '25-seats',
-    name: 'Growing Team',
-    seats: 25,
-    monthlyPrice: 7500,
-    annualPrice: 75000,
-    monthlyPerSeat: 300,
-    annualPerSeat: 250,
-    annualSavings: 15000,
-    description: 'Wellness and fitness support that can be offered across departments and teams.',
-    recommendedFor: 'Mid-sized organizations and larger teams',
-  },
-  {
-    id: '50-seats',
-    name: 'Organization Plan',
-    seats: 50,
-    monthlyPrice: 13500,
-    annualPrice: 135000,
-    monthlyPerSeat: 270,
-    annualPerSeat: 225,
-    annualSavings: 27000,
-    description: 'A workplace wellness program for organizations with larger teams.',
-    recommendedFor: 'Large organizations and distributed teams',
+    description: 'Up to 10 app memberships coached live in two small-group pods of 5 (max 6 per live video room) to protect form quality.',
+    recommendedFor: 'Teams of 7–10 coached across two dedicated 5-person Live Studio pods',
   },
 ]
 
@@ -113,7 +109,7 @@ export function computeCorporateFinancials(
   cadence: CorporateCadence,
   assumptions: CorporateRoiAssumptions = {}
 ): CorporateFinancials {
-  const safeSeats = Math.max(1, Math.min(250, Math.round(seats || 10)))
+  const safeSeats = Math.max(1, Math.min(MAX_SUPPORTED_CORPORATE_SEATS, Math.round(seats || 6)))
 
   // Check if matches an exact preset
   const preset = CORPORATE_TIER_PRESETS.find(p => p.seats === safeSeats)
@@ -125,12 +121,11 @@ export function computeCorporateFinancials(
     monthlyInvestment = preset.monthlyPrice
     annualInvestment = preset.annualPrice
   } else {
-    // Dynamic sliding scale per seat
+    // Dynamic sliding scale per seat within supported 1–10 seat capacity
     let ratePerSeat = 350
-    if (safeSeats <= 5) ratePerSeat = 400
-    else if (safeSeats <= 15) ratePerSeat = 350
-    else if (safeSeats <= 35) ratePerSeat = 300
-    else ratePerSeat = 270
+    if (safeSeats <= 4) ratePerSeat = 400
+    else if (safeSeats <= 6) ratePerSeat = 367
+    else ratePerSeat = 350
 
     monthlyInvestment = safeSeats * ratePerSeat
     // Annual is 10 months of monthly rate (2 months complimentary)
@@ -192,20 +187,24 @@ export function generateCorporateProposalSignature(
 }
 
 export function getProposalDeliverablesList(seats: number, cadence: CorporateCadence): CorporateDeliverableItem[] {
+  const safeSeats = Math.max(1, Math.min(MAX_SUPPORTED_CORPORATE_SEATS, Math.round(seats || 6)))
+  const usesDualPods = safeSeats > MAX_CONCURRENT_LIVE_STUDIO_ATHLETES
   const deliverables: CorporateDeliverableItem[] = [
     {
       number: '01',
-      title: `${seats} app memberships`,
-      headline: 'Training plans and health tools',
-      details: 'Each participant can use the Forge Athletic app for personalized NASM OPT™ training plans, workout tracking, cardio tools, and movement resources.',
+      title: `${safeSeats} app memberships`,
+      headline: 'Personalized NASM OPT™ plans & posture checks',
+      details: 'Each participant gets the Forge Athletic app with individualized NASM OPT™ training plans, workout tracking, cardio tools, and local 33-point posture screening.',
       cadence: 'Continuous Access',
     },
     {
       number: '02',
-      title: 'Monthly live team workshop',
-      headline: 'Movement, ergonomics, and stress management',
-      details: 'Coach Gordon, a NASM-certified trainer, leads a 60-minute virtual or on-site workshop on movement, desk ergonomics, and recovery.',
-      cadence: 'Monthly',
+      title: usesDualPods ? 'Monthly live small-group sessions (2 pods of up to 5)' : `Monthly live small-group coaching session (up to ${safeSeats} live)`,
+      headline: 'Encrypted Live Studio form coaching, mobility & strength',
+      details: usesDualPods
+        ? 'Coach Gordon (NASM-CPT) leads monthly 60-minute live coaching sessions split into two dedicated small-group pods (max 5–6 athletes per live video room) to ensure hands-on form visibility.'
+        : 'Coach Gordon (NASM-CPT) leads a 60-minute encrypted Live Studio small-group coaching session focused on movement quality, strength, mobility, and recovery.',
+      cadence: 'Monthly (Evenings & Weekends)',
     },
     {
       number: '03',
@@ -218,24 +217,24 @@ export function getProposalDeliverablesList(seats: number, cadence: CorporateCad
       number: '04',
       title: 'Training support while traveling',
       headline: 'Flexible options for different schedules and spaces',
-      details: 'Find training options for travel, changing sleep schedules, limited equipment, or a busy workday.',
+      details: 'Adapt workouts cleanly for hotel gyms, limited equipment, travel days, and busy executive schedules.',
       cadence: 'On-Demand',
     },
     {
       number: '05',
-      title: 'Direct coaching support',
-      headline: 'Help with training plans and scheduling',
-      details: 'Team contacts and participants can reach the coach with questions about plan adjustments, travel, or scheduling.',
-      cadence: 'Priority Real-Time',
+      title: 'Direct coach messaging support',
+      headline: 'Plan adjustments, exercise swaps & scheduling',
+      details: 'Team contacts and participants can message Coach Gordon directly for program adjustments, travel swaps, or scheduling (1-business-day response).',
+      cadence: '1-Business-Day SLA',
     },
   ]
 
   if (cadence === 'annual') {
     deliverables.push({
       number: '06',
-      title: 'On-site movement and ergonomics session',
-      headline: 'Movement and workstation assessment',
-      details: 'Annual program option: Coach Gordon leads an interactive movement and workstation assessment at your organization (or interactive live virtual clinic).',
+      title: 'Annual virtual movement & ergonomics clinic',
+      headline: 'Interactive workstation & posture screening workshop',
+      details: 'Annual program inclusion: Coach Gordon leads a dedicated interactive Live Studio movement & desk ergonomics clinic for your cohort (optional Greater Boston on-site by arrangement).',
       cadence: 'Annual Inclusion',
     })
   }
