@@ -24,7 +24,14 @@ const ExecutiveChatPayloadSchema = z.object({
   botId: z.enum(['b2b-partnerships', 'growth-marketing', 'cfo-revenue', 'enterprise-ops']),
   message: z.string().trim().min(1, 'Message is required').max(2400, 'Message is too long'),
   deliverableMode: z
-    .enum(['advisory', 'playbook', 'outreach_draft', 'financial_model', 'compliance_checklist'])
+    .enum([
+      'advisory',
+      'playbook',
+      'outreach_draft',
+      'financial_model',
+      'compliance_checklist',
+      'social_pack',
+    ])
     .optional(),
   history: z
     .array(

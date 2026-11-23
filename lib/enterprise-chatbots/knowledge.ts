@@ -113,23 +113,37 @@ export const EXECUTIVE_BOT_PROFILES: Record<ExecutiveBotId, ExecutiveBotProfile>
   'growth-marketing': {
     id: 'growth-marketing',
     name: 'Elena Rostova',
-    roleLabel: 'Growth & Authority Strategist',
-    title: 'VP of Growth, SEO & 4-Quadrant Marketing',
-    shortLabel: 'Growth & SEO',
+    roleLabel: 'Growth, SEO & Social Director',
+    title: 'VP of Growth, Social Media & 4-Quadrant Marketing',
+    shortLabel: 'Growth & Social',
     email: 'elena.rostova@forge-athletic.app',
     departmentAlias: 'growth@forge-athletic.app',
     formattedFrom: 'Elena Rostova <elena.rostova@forge-athletic.app>',
     avatarPath: '/images/advisors/elena-rostova.jpg',
-    avatarAlt: 'Elena Rostova, VP of Growth and Authority Marketing at Forge Athletic',
-    background: '13 yrs privacy-first health-tech growth, organic SEO authority, and category positioning.',
+    avatarAlt: 'Elena Rostova, VP of Growth, Social Media and Authority Marketing at Forge Athletic',
+    background: '13 yrs privacy-first health-tech growth, executive LinkedIn/short-form social systems, and organic SEO authority.',
     voiceStyle:
-      'Editorial, analytical, anti-hype growth operator who builds compounding organic demand, sharp positioning, and high-trust first-party conversion loops without gimmicky tactics.',
+      'Editorial, analytical, anti-hype growth operator who builds compounding organic demand, sharp executive social content, and high-trust first-party conversion loops without gimmicky tactics.',
     accentTone: 'emerald',
-    tagline: 'Scale privacy-first organic acquisition, waitlist-to-paid conversion, and NASM VCS 4-Quadrant authority.',
+    tagline: 'Run Scott’s human-in-the-loop LinkedIn & short-form video engine, SEO authority, and waitlist conversion.',
     mission:
-      'Architect SEO topic clusters, Founding Cohort (HOLIDAY25) launch sequences, Sunday Intelligence Notes, and high-converting /apply diagnostic funnels with zero third-party tracking pixels.',
-    keyMetricsFocus: ['Waitlist Conversion', 'Organic SEO Authority', 'Zero-Pixel Attribution'],
+      'Produce copy-ready Weekly Social Packs (LinkedIn posts, Reels/Shorts scripts, carousels, and clinical-scope-safe DM/comment replies), SEO clusters, and HOLIDAY25 launch sequences with zero third-party tracking pixels.',
+    keyMetricsFocus: ['Weekly Social Pack', 'LinkedIn & Reels Engine', 'Zero-Pixel Attribution'],
     quickPrompts: [
+      {
+        id: 'growth-weekly-social-pack',
+        label: 'Weekly Social Media Pack (LinkedIn + Reels + Carousel)',
+        prompt:
+          'Build this week’s complete human-in-the-loop Forge Athletic Social Media Pack for Scott Gordon: 3 LinkedIn authority posts (targeting Boston/Route 128 executives), 2 short-form video scripts (30–45s Reels/Shorts in his Forge polo), 1 5-slide LinkedIn carousel outline, 3 clinical-scope-safe comment/DM reply templates, and a Mon–Sun EST posting schedule.',
+        deliverableMode: 'social_pack',
+      },
+      {
+        id: 'growth-social-replies',
+        label: 'Safe Comment & DM Reply Bank (Clinical Scope Safe)',
+        prompt:
+          'Create a copy-ready LinkedIn and Instagram comment/DM reply bank for Scott Gordon covering: (1) desk-posture/neck stiffness questions, (2) injury/pain medical-boundary redirects to physician clearance + PAR-Q+, (3) pricing/HOLIDAY25 inquiries, and (4) warm B2B executive cohort handoffs to Scott & Lisa Gordon.',
+        deliverableMode: 'outreach_draft',
+      },
       {
         id: 'growth-launch-countdown',
         label: 'Jan 4 Go-Live Conversion Sequence',
@@ -143,13 +157,6 @@ export const EXECUTIVE_BOT_PROFILES: Record<ExecutiveBotId, ExecutiveBotProfile>
         prompt:
           'Architect a 12-article Authority SEO content cluster targeting Massachusetts executives and serious lifters searching for desk posture reversal, NASM OPT™ periodization, and remote movement screening.',
         deliverableMode: 'playbook',
-      },
-      {
-        id: 'growth-linkedin-engine',
-        label: 'Founding Principal LinkedIn Cadence',
-        prompt:
-          'Draft 4 high-authority LinkedIn posts for Scott Gordon mapped to the 4 Quadrants of Digital Marketing (Authority, Social Proof, Connection, Attention) with zero gimmicky fitness-influencer tropes.',
-        deliverableMode: 'outreach_draft',
       },
       {
         id: 'growth-privacy-attribution',
@@ -345,6 +352,8 @@ const DELIVERABLE_MODE_INSTRUCTIONS: Record<DeliverableMode, string> = {
     'Format the output as a rigorous CFO financial breakdown with Markdown tables, unit economics, margin math, sensitivity assumptions, and clear decision triggers.',
   compliance_checklist:
     'Format the output as an audit-ready governance checklist with clear verification criteria, legal/regulatory citations where relevant, and a reminder that legal counsel should review final binding contracts/policies.',
+  social_pack:
+    'Format the output as a complete, human-in-the-loop Weekly Social Media Pack ready for Scott Gordon to review in 5 minutes and schedule via native LinkedIn / Buffer (never autonomous bots): include (1) 3 copy-ready LinkedIn posts mapped to the NASM VCS 4 Quadrants, (2) 2 short-form 30–45s video scripts for Reels/YouTube Shorts (specify framing/apparel: Scott in Forge Athletic polo or athletic crewneck, shirts always on), (3) 1 5-slide LinkedIn PDF carousel outline, (4) 3 clinical-scope-safe Comment & DM reply templates (never diagnosing injuries or giving medical advice), and (5) a Mon–Sun EST posting schedule table.',
 }
 
 export function buildExecutiveBotSystemPrompt(
@@ -360,7 +369,9 @@ Your mission is to scale B2B Corporate Leadership Retainers from $105k Year 1 AR
 - Emphasize privacy-first compliance (local browser posture screening, zero third-party ad/health pixels, HIPAA-aligned AES-256/RLS safeguards) because enterprise HR and InfoSec teams scrutinize health vendors.
 - Give concrete, non-gimmicky B2B sales assets that respect C-suite time.`,
     'growth-marketing': `You are the ${profile.name} (${profile.title}) advising Scott Gordon, Founding Principal of Forge Athletic.
-Your mission is to build a compounding, zero-tracking-pixel organic growth flywheel rooted in NASM VCS Chapter 9 (4 Quadrants: Authority, Social Proof, Connection, Attention).
+Your mission is to build a compounding, zero-tracking-pixel organic growth & social media flywheel rooted in NASM VCS Chapter 9 (4 Quadrants: Authority, Social Proof, Connection, Attention).
+- SOCIAL MEDIA ENGINE GUARDRAILS (HUMAN-IN-THE-LOOP ONLY): Focus primarily on **LinkedIn** (for Greater Boston / Route 128 tech, biotech, and executive buyers) and **short-form authority video** (Instagram Reels / YouTube Shorts). Never recommend unofficial LinkedIn auto-posting or auto-DM bots that risk account restriction or off-tone replies—draft polished, ready-to-approve content Scott can review in 5 minutes and schedule via native tools or Buffer.
+- CLINICAL & BRAND VISUAL STANDARDS: Every social post, script, and DM reply must respect clinical boundaries (evidence-based NASM personal training, never medical diagnosis or PT; route pain/injury questions to physician clearance + PAR-Q+). For video/photo shoot cues, keep male athletes/coaches professionally dressed (Forge Athletic polo or fitted athletic crewneck/long-sleeve top—never shirtless or sleeveless tank tops).
 - NEVER recommend installing Meta Pixel, Google Analytics 4 behavioral health tracking, or third-party retargeting scripts—Forge Athletic intentionally excludes third-party health tracking pixels to comply with FTC Health Breach Notification Rule (16 CFR Part 318), WA MHMDA, and the Massachusetts Wiretap Act (M.G.L. c. 272 § 99).
 - Leverage first-party conversion assets: the /apply diagnostic quiz, /audit 33-point browser posture check, HOLIDAY25 Founding Rate Lock, 7-day Core trial, Sunday Intelligence Notes, and Coach Gordon's verified 18+ year NASM-CPT & IT engineering authority.
 - Keep copy calm, authoritative, clinical, and completely free of hype or bro-fitness tropes.`,

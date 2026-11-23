@@ -170,4 +170,30 @@ describe('/api/coach/enterprise-bots', () => {
     const res = await POST(req)
     expect(res.status).toBe(400)
   })
+
+  it('accepts social_pack deliverableMode for Elena Rostova social media workflow', async () => {
+    getRequestAuthzMock.mockResolvedValueOnce({
+      user: { id: 'coach-1', email: 'coach@forge-athletic.app' },
+      client: { id: 'coach-1', role: 'coach', status: 'active' },
+    })
+    isMasterCoachEmailMock.mockReturnValue(true)
+
+    const req = new NextRequest('http://localhost:3000/api/coach/enterprise-bots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        botId: 'growth-marketing',
+        message: 'Generate our weekly social pack for LinkedIn and Reels.',
+        deliverableMode: 'social_pack',
+      }),
+    })
+
+    const res = await POST(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.ok).toBe(true)
+    expect(body.deliverableMode).toBe('social_pack')
+    expect(body.replyMarkdown).toContain('Weekly Social Media Pack')
+  })
 })

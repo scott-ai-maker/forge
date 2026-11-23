@@ -121,6 +121,7 @@ function deriveDeliverableTitle(botId: ExecutiveBotId, mode: DeliverableMode): s
     outreach_draft: 'Ready-to-Send Copy Pack',
     financial_model: 'CFO Revenue & Margin Model',
     compliance_checklist: 'Governance & Compliance Checklist',
+    social_pack: 'Weekly Social Media Pack',
   }
   const profile = EXECUTIVE_BOT_PROFILES[botId]
   return `${profile.name} · ${profile.shortLabel} ${modePrefix[mode]}`
@@ -136,9 +137,9 @@ function deriveExecutiveFollowUps(botId: ExecutiveBotId): string[] {
       ]
     case 'growth-marketing':
       return [
+        'Turn LinkedIn Post #1 into a 5-slide PDF carousel',
         'Draft the Sunday Intelligence Note email version',
-        'Create 3 short-form video scripts for Coach Gordon',
-        'Map the /apply quiz to Core vs. Plus email follow-ups',
+        'Write 3 safe DM follow-ups for executives who comment',
       ]
     case 'cfo-revenue':
       return [
@@ -158,7 +159,8 @@ function deriveExecutiveFollowUps(botId: ExecutiveBotId): string[] {
 function buildDeterministicExecutiveReply(
   botId: ExecutiveBotId,
   message: string,
-  telemetry: EnterpriseTelemetrySnapshot
+  telemetry: EnterpriseTelemetrySnapshot,
+  deliverableMode: DeliverableMode = 'advisory'
 ): string {
   const cleanQuestion = sanitizePiiString(message).slice(0, 180)
   const launchStatus =
@@ -203,6 +205,65 @@ scott@forge-athletic.app · partnerships@forge-athletic.app
 - **Pilot-to-Annual Trigger:** Measure 90-day seat activation (>=80%), average desk ergonomics score lift, and self-reported joint comfort improvement to lock in the annual renewal.`
 
     case 'growth-marketing':
+      if (
+        deliverableMode === 'social_pack' ||
+        /\b(social|linkedin|reel|short[- ]?form|carousel|instagram|youtube shorts)\b/i.test(message)
+      ) {
+        return `## Elena Rostova · Weekly Social Media Pack (Human-in-the-Loop)
+
+**Prepared for Scott Gordon (Founding Principal, Forge Athletic) · Brief Focus:** ${cleanQuestion}  
+**Live Pipeline:** ${telemetry.waitlistLeadsCount} Waitlist Leads · ${telemetry.coachingApplicationsCount} Coaching Applications · Status: ${launchStatus}.
+
+### 1. Weekly Posting Schedule (5-Min Human Review → Native LinkedIn / Buffer)
+| Day (EST) | Channel | Format | Quadrant | Primary CTA |
+| :--- | :--- | :--- | :--- | :--- |
+| **Mon 8:15 AM** | LinkedIn | Authority Text Post #1 | Authority | Free 33-pt browser posture screen (\`/audit\`) |
+| **Tue 12:00 PM** | Reels / Shorts / LinkedIn | 35s Video Script #1 | Attention | Comment "POSTURE" or try \`/audit\` |
+| **Wed 8:15 AM** | LinkedIn | 5-Slide PDF Carousel | Authority / Proof | 2-min diagnostic quiz (\`/apply\`) |
+| **Thu 8:15 AM** | LinkedIn | Executive Story Post #2 | Connection | \`HOLIDAY25\` Founding Rate Lock |
+| **Fri 11:30 AM** | Reels / Shorts | 40s Video Script #2 | Social Proof | Core Lab 7-day trial / Waitlist |
+| **Sun 9:00 AM** | LinkedIn + Email | Sunday Note Post #3 | Connection | Direct inquiry to \`scott@forge-athletic.app\` |
+
+### 2. Three Copy-Ready LinkedIn Posts (Zero Hype, Executive Voice)
+- **Post #1 (Monday · Authority — Desk Posture & Strength):**  
+  *Hook:* Most high-performing executives I meet do not have a motivation problem. They have a 55-hour-a-week thoracic spine problem.  
+  *Body:* Sitting through back-to-back calls locks up the hip flexors, rounds the shoulders forward, and quietly turns heavy pressing into neck tension. At **Forge Athletic**, we run a 33-point movement screen directly inside your browser (zero cloud video upload, zero third-party ad pixels) and inject targeted 4-phase corrective warm-ups straight into a 5-phase **NASM OPT™** plan.  
+  *CTA:* Want to test where your posture is leaking strength? Run the browser check at \`/audit\` or reserve a Founding Pass with code \`HOLIDAY25\`.
+- **Post #2 (Thursday · Connection — 20-Minute Express Mode):**  
+  *Hook:* Perfectionism kills more training streaks than travel ever will.  
+  *Body:* After 18+ years coaching busy professionals across Greater Boston, the single biggest predictor of long-term strength isn't a 90-minute gym session—it's refusing to turn a chaotic travel week into zero. That's why every Forge Athletic program includes a **20-Minute Express** switch and hotel-gym adaptations built around your real schedule.  
+  *CTA:* If your calendar wrecks your workouts twice a month, take the 2-minute starting-point assessment at \`/apply\`.
+- **Post #3 (Sunday · B2B Executive Longevity):**  
+  *Hook:* Your leadership team's sharpest asset isn't another productivity app—it's pain-free physical capacity at 4:00 PM.  
+  *Body:* Generic gym stipends see <15% executive engagement. **Forge Athletic** delivers clinical strength periodization, private local posture diagnostics, and live 1:1 WebRTC coaching with zero real-estate commute—structured as 5- to 50-seat Corporate Leadership Retainers ($20k–$135k/yr).  
+  *CTA:* Curious how a 90-day leadership pilot works? Message me directly or email \`partnerships@forge-athletic.app\` (cc **Lisa Gordon**, VP of Customer Success, \`lisa@forge-athletic.app\`).
+
+### 3. Two Short-Form Video Scripts (30–45s · Reels / Shorts / LinkedIn Video)
+- **Video #1 (35s — "The 3-Second Laptop Neck Audit"):**  
+  *Framing:* Scott in fitted Forge Athletic polo, clean studio lighting, chest-up vertical 9:16.  
+  *Script:* "If your upper traps feel tight by 2 PM, test this right now. Sit tall, pull your chin gently back over your collarbones, and drop your ribs down. Notice how much your head had drifted forward? That extra two inches multiplies cervical load all afternoon. We pair two-minute corrective resets like this directly with your strength blocks inside Forge Athletic. Link in bio to run the private browser posture check."
+- **Video #2 (40s — "Why Privacy Matters in Fitness Tech"):**  
+  *Framing:* Scott demonstrating a clean bodyweight Overhead Squat in Forge Athletic athletic crewneck + training shorts.  
+  *Script:* "Most fitness apps upload your camera footage to third-party servers and follow you around the internet with ad pixels. We built Forge Athletic differently: our 33-point posture scan runs 100% locally in your browser—no cloud video upload, zero third-party health tracking pixels, and HIPAA-aligned encryption. Serious coaching shouldn't cost you your privacy."
+
+### 4. 5-Slide LinkedIn PDF Carousel Outline
+1. **Slide 1 (Cover):** *The Executive Strength Blueprint: How to Train 3x/Week Without Joint Burnout*
+2. **Slide 2:** *Why Random High-Intensity Workouts Backfire After 35 (ACWR Spike Zone >=1.50)*
+3. **Slide 3:** *The 5-Phase NASM OPT™ Progression Ladder (Stabilization → Power)*
+4. **Slide 4:** *How 20-Minute Express + Travel Adaptations Protect Consistency*
+5. **Slide 5 (CTA):** *Reserve Your Founding Rate Lock (\`HOLIDAY25\` · 25% Off Continuously) at Forge Athletic*
+
+### 5. Clinical-Scope-Safe Comment & DM Reply Templates (Human-Approved Only)
+- **Injury / Pain Comment (Clinical Boundary):** *"Appreciate you sharing that—I never diagnose pain or prescribe rehab over social media. Definitely have a licensed physician or PT clear it first; once you're cleared, our automated PAR-Q+ intake and NASM OPT™ progressions are built to train safely around orthopedic history."*
+- **Pricing / Offer Question:** *"Great question—Core Lab is $49/mo (7-day trial), Plus is $99/mo (4 Form Lab video reviews + Nutrition + Travel Pass), and 1-on-1 Coach Support is $299/mo (capped at 15 athletes). Using \`HOLIDAY25\` locks 25% off continuously through Jan 31, 2027."*
+- **Corporate / Team Inquiry:** *"Happy to share our 90-day leadership pilot overview ($20k–$135k/yr annual tiers). Feel free to email \`partnerships@forge-athletic.app\` or I can connect you directly with **Lisa Gordon**, our VP of Customer Success (\`lisa@forge-athletic.app\`)."*
+
+### 6. 5-Minute Human Approval Checklist
+- [ ] Verify tone sounds authentically like Scott Gordon (calm, clinical, zero hype).
+- [ ] Confirm no autonomous auto-posting or unauthorized LinkedIn DM bots are enabled.
+- [ ] Schedule approved posts natively on LinkedIn or via Buffer.`
+      }
+
       return `## Elena Rostova · 4-Quadrant Growth & Conversion Strategy
 
 **Prepared for Scott Gordon (Founding Principal, Forge Athletic) · Brief Focus:** ${cleanQuestion}  
@@ -305,11 +366,12 @@ Deliver a high-leverage, immediately usable response tailored specifically to Fo
     history: Array.isArray(req.history) ? req.history : [],
     userPrompt,
     temperature: deliverableMode === 'financial_model' || deliverableMode === 'compliance_checklist' ? 0.25 : 0.45,
-    maxOutputTokens: 2400,
+    maxOutputTokens: deliverableMode === 'social_pack' ? 3200 : 2400,
   })
 
   const replyMarkdown =
-    geminiReply || buildDeterministicExecutiveReply(req.botId, cleanMessage, telemetry)
+    geminiReply ||
+    buildDeterministicExecutiveReply(req.botId, cleanMessage, telemetry, deliverableMode)
 
   return {
     botId: req.botId,

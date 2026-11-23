@@ -88,6 +88,7 @@ const LISA_CS_QUICK_PROMPTS: Record<
 const DELIVERABLE_MODES: Array<{ id: DeliverableMode; label: string }> = [
   { id: 'advisory', label: 'Executive Briefing' },
   { id: 'playbook', label: 'Executable Playbook' },
+  { id: 'social_pack', label: 'Weekly Social Pack' },
   { id: 'outreach_draft', label: 'Outreach Copy' },
   { id: 'financial_model', label: 'Financial Model' },
   { id: 'compliance_checklist', label: 'Compliance Audit' },
@@ -822,6 +823,42 @@ export default function ExecutiveGrowthCommandCenter({
               </span>
             ))}
           </div>
+
+          {activeBotId === 'growth-marketing' ? (
+            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                  Human-in-the-Loop Social Engine
+                </span>
+                <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-200">
+                  5-Min Review
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-300">
+                Drafts 3 LinkedIn posts, 2 Reels/Shorts scripts, 1 carousel, and safe comment/DM replies—ready to copy,
+                download, or email to your inbox.
+              </p>
+              <button
+                type="button"
+                disabled={loadingBotId !== null}
+                onClick={() => {
+                  const socialPrompt = activeBot.quickPrompts.find(
+                    qp => qp.id === 'growth-weekly-social-pack'
+                  )
+                  setDeliverableMode('social_pack')
+                  void submitPrompt(
+                    socialPrompt?.prompt ||
+                      'Generate this week’s complete Forge Athletic Social Media Pack for LinkedIn, Reels/Shorts, and safe DM replies.',
+                    'social_pack'
+                  )
+                }}
+                className="mt-2.5 inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-zinc-950 transition hover:bg-emerald-300 disabled:opacity-50"
+              >
+                <Sparkles size={13} aria-hidden="true" />
+                <span>Generate Weekly Social Pack</span>
+              </button>
+            </div>
+          ) : null}
 
           <div className="border-t border-white/10 pt-3">
             <h3 className="mb-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.12em] text-zinc-400">

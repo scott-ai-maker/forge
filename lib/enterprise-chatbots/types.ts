@@ -22,6 +22,7 @@ export type DeliverableMode =
   | 'outreach_draft'
   | 'financial_model'
   | 'compliance_checklist'
+  | 'social_pack'
 
 export interface EnterpriseChatTurn {
   role: 'user' | 'assistant'

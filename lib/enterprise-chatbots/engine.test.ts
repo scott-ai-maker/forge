@@ -212,4 +212,35 @@ describe('Forge Athletic Enterprise Growth Chatbot Engine', () => {
     expect(liveCorp.launchMode).toBe('public_live')
     expect(liveCorp.actionLinks.some(l => l.href === '/corporate/proposal')).toBe(true)
   })
+
+  it('generates a complete human-in-the-loop Weekly Social Media Pack via Elena Rostova', async () => {
+    const telemetry = {
+      ...buildBaselineTelemetrySnapshot(new Date('2026-11-22T12:00:00Z')),
+      dataSource: 'live_supabase' as const,
+      activeAssignedClients: 1,
+      verifiedMonthlyRecurringRevenueUsd: 400,
+      verifiedAnnualRecurringRevenueUsd: 4800,
+      legacyRetainerClientsCount: 1,
+      waitlistLeadsCount: 24,
+      coachingApplicationsCount: 6,
+    }
+
+    const res = await runExecutiveBotTurn(
+      {
+        botId: 'growth-marketing',
+        message: 'Generate this week’s Forge Athletic LinkedIn and Reels social media pack.',
+        deliverableMode: 'social_pack',
+      },
+      telemetry
+    )
+
+    expect(res.botId).toBe('growth-marketing')
+    expect(res.deliverableMode).toBe('social_pack')
+    expect(res.deliverableTitle).toContain('Weekly Social Media Pack')
+    expect(res.replyMarkdown).toContain('LinkedIn')
+    expect(res.replyMarkdown).toContain('Short-Form Video Scripts')
+    expect(res.replyMarkdown).toContain('Clinical-Scope-Safe Comment & DM Reply Templates')
+    expect(res.replyMarkdown).toContain('PAR-Q+')
+    expect(res.replyMarkdown).not.toMatch(/\bGAA\b|Gordon Athletic/i)
+  })
 })

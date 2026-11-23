@@ -48,10 +48,10 @@ const WEEKLY_CADENCE = [
   },
   {
     day: 'Wednesday · 8:00–8:30 AM',
-    session: 'Growth, SEO & Authority',
+    session: 'Growth, Social & Authority',
     owners: 'Scott',
     advisor: 'Elena Rostova',
-    focus: 'Publish 1 authority post + Sunday Intelligence Note or HOLIDAY25 waitlist sequence.',
+    focus: 'Generate Weekly Social Pack (3 LinkedIn posts, 2 Reels/Shorts scripts, 1 carousel) + HOLIDAY25/SEO execution.',
   },
   {
     day: 'Thursday · 8:00–8:20 AM',
