@@ -24,7 +24,12 @@ import {
 } from '@/lib/nasm-assessments'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import { createClient } from '@/lib/supabase-browser'
-import { WebRtcPeerBridge, WebRtcMultiPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
+import {
+  WebRtcPeerBridge,
+  WebRtcMultiPeerBridge,
+  fetchAuthenticatedIceServers,
+  type LobbyParticipant,
+} from '@/lib/webrtc-peer-bridge'
 import {
   TEAM_QUICK_CUES,
   type TeamCircuitTimerData,
@@ -792,12 +797,17 @@ export default function UnifiedLiveStudioHud({
   )
 
   const handleReconnectStream = useCallback(() => {
-    if (bridgeRef.current) {
+    if (isTeamSession && multiBridgeRef.current) {
+      void multiBridgeRef.current.restartIceForAllPeers()
+    } else if (bridgeRef.current) {
       void bridgeRef.current.restartIce()
       void bridgeRef.current.announcePresence()
     }
-    showHudToast('Re-stabilizing athlete live link…', 'emerald')
-  }, [showHudToast])
+    showHudToast(
+      isTeamSession ? 'Re-stabilizing squad live links…' : 'Re-stabilizing athlete live link…',
+      'emerald'
+    )
+  }, [isTeamSession, showHudToast])
 
   const handleRequestClientSnapshot = useCallback(() => {
     if (isTeamSession && multiBridgeRef.current) {
@@ -848,6 +858,9 @@ export default function UnifiedLiveStudioHud({
     })
     signalingChannelRef.current = channel
 
+    let isCancelled = false
+    let lastAppliedTier: ResolvedBandwidthTier | null = null
+
     if (isTeamSession) {
       const multiBridge = new WebRtcMultiPeerBridge({
         sessionId,
@@ -856,6 +869,7 @@ export default function UnifiedLiveStudioHud({
         isCoach: true,
         channel,
         localStream: mediaStreamRef.current,
+        initialBandwidthMode: bandwidthMode,
         onPeerStream: (peerId, stream, _participant) => {
           setTeamRemoteStreams(prev => ({ ...prev, [peerId]: stream }))
           setActiveRemoteStream(prev => prev || stream)
@@ -877,14 +891,23 @@ export default function UnifiedLiveStudioHud({
           setPeerLatencyMs(rtt)
           setLastSignalAt(Date.now())
         },
+        onNetworkQualityChange: (quality, tier) => {
+          setNetworkQuality(quality)
+          setEffectiveTier(tier)
+          if (lastAppliedTier !== tier) {
+            lastAppliedTier = tier
+            void applyCameraBandwidthConstraints(streamRef.current, tier)
+          }
+        },
         onFormSnapshot: (dataUrl, ts) => {
           setRemoteSnapshot({ url: dataUrl, capturedAt: ts })
           setLastSignalAt(Date.now())
         },
         onBandwidthModeSignal: mode => {
           setBandwidthMode(mode)
-          const nextTier = resolveEffectiveBandwidthTier(mode, networkQuality, 1)
+          const nextTier = multiBridge.getEffectiveTier()
           setEffectiveTier(nextTier)
+          lastAppliedTier = nextTier
           void applyCameraBandwidthConstraints(streamRef.current, nextTier)
           const spec = BANDWIDTH_PROFILES[nextTier]
           showHudToast(`⚡ Squad switched to ${spec.label} (${spec.estimatedKbps})`, 'emerald')
@@ -949,6 +972,9 @@ export default function UnifiedLiveStudioHud({
         })
         .subscribe(async status => {
           if (status === 'SUBSCRIBED') {
+            const iceServers = await fetchAuthenticatedIceServers(1500)
+            if (isCancelled) return
+            multiBridge.setIceServers(iceServers)
             multiBridge.init()
             try {
               await channel.track({
@@ -981,14 +1007,32 @@ export default function UnifiedLiveStudioHud({
           }
         })
 
+      // Fast 2.5s adaptive per-peer bandwidth & congestion sampling across the squad
+      const healthTimer = setInterval(() => {
+        if (multiBridgeRef.current) {
+          void multiBridgeRef.current.sampleNetworkHealth()
+        }
+      }, 2500)
+
       const pingTimer = setInterval(() => {
         if (multiBridgeRef.current) {
           multiBridgeRef.current.sendPingToAll()
         }
-      }, 6000)
+      }, 5000)
+
+      const conn = getNavigatorConnection()
+      const handleNetworkChange = () => {
+        if (multiBridgeRef.current) {
+          void multiBridgeRef.current.sampleNetworkHealth()
+        }
+      }
+      conn?.addEventListener?.('change', handleNetworkChange)
 
       return () => {
+        isCancelled = true
+        clearInterval(healthTimer)
         clearInterval(pingTimer)
+        conn?.removeEventListener?.('change', handleNetworkChange)
         multiBridge.destroy()
         multiBridgeRef.current = null
         signalingChannelRef.current = null
@@ -1015,12 +1059,16 @@ export default function UnifiedLiveStudioHud({
         onNetworkQualityChange: (quality, tier) => {
           setNetworkQuality(quality)
           setEffectiveTier(tier)
-          void applyCameraBandwidthConstraints(streamRef.current, tier)
+          if (lastAppliedTier !== tier) {
+            lastAppliedTier = tier
+            void applyCameraBandwidthConstraints(streamRef.current, tier)
+          }
         },
         onBandwidthModeSignal: mode => {
           setBandwidthMode(mode)
           const nextTier = bridge.getEffectiveTier()
           setEffectiveTier(nextTier)
+          lastAppliedTier = nextTier
           void applyCameraBandwidthConstraints(streamRef.current, nextTier)
           const spec = BANDWIDTH_PROFILES[nextTier]
           showHudToast(`⚡ ${athleteName} switched to ${spec.label} (${spec.estimatedKbps})`, 'emerald')
@@ -1101,6 +1149,9 @@ export default function UnifiedLiveStudioHud({
         })
         .subscribe(async status => {
           if (status === 'SUBSCRIBED') {
+            const iceServers = await fetchAuthenticatedIceServers(1500)
+            if (isCancelled) return
+            bridge.setIceServers(iceServers)
             bridge.init()
             // Track Coach presence in Studio Lobby
             try {
@@ -1133,13 +1184,19 @@ export default function UnifiedLiveStudioHud({
           }
         })
 
-      // Lightweight ping & network health check every 6s without triggering SDP renegotiation
+      // Fast 2.5s adaptive network health check to catch congestion/freezes before bufferbloat stalls video
+      const healthTimer = setInterval(() => {
+        if (bridgeRef.current) {
+          void bridgeRef.current.sampleNetworkHealth()
+        }
+      }, 2500)
+
+      // Lightweight signaling heartbeat every 5s without triggering SDP renegotiation
       const pingTimer = setInterval(() => {
         if (bridgeRef.current) {
           bridgeRef.current.sendPing()
-          void bridgeRef.current.sampleNetworkHealth()
         }
-      }, 6000)
+      }, 5000)
 
       const conn = getNavigatorConnection()
       const handleNetworkChange = () => {
@@ -1150,6 +1207,8 @@ export default function UnifiedLiveStudioHud({
       conn?.addEventListener?.('change', handleNetworkChange)
 
       return () => {
+        isCancelled = true
+        clearInterval(healthTimer)
         clearInterval(pingTimer)
         conn?.removeEventListener?.('change', handleNetworkChange)
         bridge.destroy()

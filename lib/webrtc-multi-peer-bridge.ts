@@ -1,15 +1,26 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import {
   DEFAULT_RTC_CONFIG,
+  fetchAuthenticatedIceServers,
   getIceServers,
   type LobbyParticipant,
   type WebRtcSignalPayload,
 } from './webrtc-peer-bridge'
 import {
   BANDWIDTH_PROFILES,
+  ICE_RESTART_BACKOFF_MS,
+  computeMultiPeerSenderBudget,
+  detectBrowserNetworkHint,
+  enhanceSdpForResilientCoaching,
+  evaluateNetworkQuality,
+  getBandwidthTierRank,
+  minBandwidthTier,
+  resolveAdaptiveTierWithHysteresis,
   resolveEffectiveBandwidthTier,
   type BandwidthMode,
   type CoachingSyncPayload,
+  type NetworkHealthSample,
+  type NetworkQualityGrade,
   type ResolvedBandwidthTier,
 } from './live-bandwidth-profiles'
 
@@ -53,12 +64,18 @@ export interface WebRtcMultiPeerBridgeOptions {
    */
   allowAthleteToAthleteMesh?: boolean
   iceServers?: RTCIceServer[]
+  initialBandwidthMode?: BandwidthMode
   channel?: RealtimeChannel | null
   localStream?: MediaStream | null
   onPeerStream?: (peerId: string, stream: MediaStream, info: LobbyParticipant) => void
   onPeerLeft?: (peerId: string) => void
   onPeerConnectionStateChange?: (peerId: string, state: RTCPeerConnectionState) => void
   onPeerLatencyChange?: (peerId: string, latencyMs: number) => void
+  onNetworkQualityChange?: (
+    quality: NetworkQualityGrade,
+    effectiveTier: ResolvedBandwidthTier,
+    sample: NetworkHealthSample
+  ) => void
   onTeamCue?: (cue: string, senderName: string) => void
   onSpotlightChange?: (spotlightUserId: string | null) => void
   onMuteDirective?: (muted: boolean) => void
@@ -66,6 +83,17 @@ export interface WebRtcMultiPeerBridgeOptions {
   onFormSnapshot?: (dataUrl: string, timestamp: number, senderId: string) => void
   onBandwidthModeSignal?: (mode: BandwidthMode, senderId: string) => void
   onError?: (err: Error) => void
+}
+
+export interface PeerAdaptiveHealth {
+  peerId: string
+  name: string
+  quality: NetworkQualityGrade
+  effectiveTier: ResolvedBandwidthTier
+  remoteCeiling: ResolvedBandwidthTier | null
+  latencyMs: number | null
+  allocatedVideoBitrate: number
+  videoEnabled: boolean
 }
 
 interface PeerEntry {
@@ -82,27 +110,85 @@ interface PeerEntry {
   pendingCandidates: RTCIceCandidateInit[]
   latencyMs: number | null
   iceRestartTimer: ReturnType<typeof setTimeout> | null
+  iceRestartAttempts: number
+  isRestartingIce: boolean
+  quality: NetworkQualityGrade
+  effectiveTier: ResolvedBandwidthTier
+  remoteCeiling: ResolvedBandwidthTier | null
+  consecutiveDegradedSamples: number
+  consecutiveHealthySamples: number
+  prevPacketsReceived: number
+  prevPacketsLost: number
+  prevFreezeCount: number
+  availableOutgoingBitrate: number | null
+  allocatedVideoBitrate: number
 }
 
 /**
- * Enterprise Multi-Peer WebRTC Mesh Bridge for Team & Squad Live Studio.
- * Connects a coach with multiple athletes simultaneously:
- * - Deterministic polite/impolite role negotiation per peer pair.
- * - Targeted WebRTC signaling via targetUserId in shared Realtime channel.
- * - Per-peer connection state, latency monitoring, and automatic ICE restarts.
- * - Broadcast channels for team-wide mute, spotlight, circuit timer, and spoken cues.
+ * Enterprise Multi-Peer WebRTC Hub/Mesh Bridge for Team & Squad Live Studio.
+ * Connects a coach with multiple athletes simultaneously with:
+ * - Coach-Hub Star Topology privacy safeguard (#30) by default.
+ * - Per-peer + aggregate upload bitrate budgeting so 2–10 mixed-bandwidth athletes never saturate upload.
+ * - Spotlight bitrate prioritization, Opus FEC/DTX, DSCP high-priority voice, and per-peer ICE restart backoff.
  */
 export class WebRtcMultiPeerBridge {
   private peers = new Map<string, PeerEntry>()
   private options: WebRtcMultiPeerBridgeOptions
   private isDestroyed = false
   private spotlightUserId: string | null = null
+  private resolvedIceServers: RTCIceServer[] | null = null
+  private bandwidthMode: BandwidthMode = 'auto'
+  private aggregateQuality: NetworkQualityGrade = 'excellent'
+  private aggregateTier: ResolvedBandwidthTier = 'hd'
 
   constructor(options: WebRtcMultiPeerBridgeOptions) {
     this.options = options
+    this.bandwidthMode = options.initialBandwidthMode ?? 'auto'
+    if (options.iceServers?.length) {
+      this.resolvedIceServers = options.iceServers
+    }
+    const hint = detectBrowserNetworkHint()
+    this.aggregateQuality = evaluateNetworkQuality({
+      rttMs: hint.rttMs ?? null,
+      saveData: hint.saveData,
+      effectiveType: hint.effectiveType,
+      downlinkMbps: hint.downlinkMbps,
+    })
+    this.aggregateTier = resolveEffectiveBandwidthTier(this.bandwidthMode, this.aggregateQuality, 1)
+  }
+
+  public setIceServers(servers: RTCIceServer[]): void {
+    if (!servers.length) return
+    this.resolvedIceServers = servers
+    this.options.iceServers = servers
+    if (this.isDestroyed) return
+    for (const entry of this.peers.values()) {
+      if (typeof entry.pc.setConfiguration === 'function') {
+        try {
+          entry.pc.setConfiguration({ ...DEFAULT_RTC_CONFIG, iceServers: servers })
+        } catch {
+          // Ignore if browser rejects mid-negotiation reconfiguration
+        }
+      }
+    }
   }
 
   public init(): boolean {
+    if (!this.resolvedIceServers && typeof window !== 'undefined') {
+      void fetchAuthenticatedIceServers().then(servers => {
+        if (this.isDestroyed) return
+        this.resolvedIceServers = servers
+        for (const entry of this.peers.values()) {
+          if (typeof entry.pc.setConfiguration === 'function') {
+            try {
+              entry.pc.setConfiguration({ ...DEFAULT_RTC_CONFIG, iceServers: servers })
+            } catch {
+              // Ignore if browser rejects mid-negotiation reconfiguration
+            }
+          }
+        }
+      })
+    }
     return !!getRTCPeerConnectionConstructor()
   }
 
@@ -141,9 +227,11 @@ export class WebRtcMultiPeerBridge {
     if (!RTCPeerConnectionClass) return null
 
     try {
-      const configuredIceServers = this.options.iceServers?.length
-        ? this.options.iceServers
-        : getIceServers()
+      const configuredIceServers = this.resolvedIceServers?.length
+        ? this.resolvedIceServers
+        : this.options.iceServers?.length
+          ? this.options.iceServers
+          : getIceServers()
       const hasTurnRelay = configuredIceServers.some(server => {
         const urls = Array.isArray(server.urls) ? server.urls : [server.urls]
         return urls.some(u => typeof u === 'string' && (u.startsWith('turn:') || u.startsWith('turns:')))
@@ -185,6 +273,18 @@ export class WebRtcMultiPeerBridge {
         pendingCandidates: [],
         latencyMs: null,
         iceRestartTimer: null,
+        iceRestartAttempts: 0,
+        isRestartingIce: false,
+        quality: this.aggregateQuality,
+        effectiveTier: this.aggregateTier,
+        remoteCeiling: null,
+        consecutiveDegradedSamples: 0,
+        consecutiveHealthySamples: 0,
+        prevPacketsReceived: 0,
+        prevPacketsLost: 0,
+        prevFreezeCount: 0,
+        availableOutgoingBitrate: null,
+        allocatedVideoBitrate: BANDWIDTH_PROFILES[this.aggregateTier].maxVideoBitrate,
       }
 
       this.peers.set(peerId, entry)
@@ -250,7 +350,12 @@ export class WebRtcMultiPeerBridge {
 
       // Connection state changes
       pc.onconnectionstatechange = () => {
-        if (pc && this.options.onPeerConnectionStateChange) {
+        if (!pc || this.isDestroyed) return
+        if (pc.connectionState === 'connected') {
+          entry.iceRestartAttempts = 0
+          entry.isRestartingIce = false
+        }
+        if (this.options.onPeerConnectionStateChange) {
           this.options.onPeerConnectionStateChange(peerId, pc.connectionState)
         }
       }
@@ -267,19 +372,48 @@ export class WebRtcMultiPeerBridge {
         }
       }
 
-      // ICE Connection Auto-Restart
+      // ICE Connection Auto-Restart (both disconnected debounce + failed)
       pc.oniceconnectionstatechange = () => {
         if (!pc || this.isDestroyed) return
         const state = pc.iceConnectionState
-        if (state === 'failed') {
+        if (state === 'connected' || state === 'completed') {
+          if (entry.iceRestartTimer) {
+            clearTimeout(entry.iceRestartTimer)
+            entry.iceRestartTimer = null
+          }
+          entry.iceRestartAttempts = 0
+          entry.isRestartingIce = false
+          return
+        }
+
+        if (state === 'disconnected') {
+          if (!entry.iceRestartTimer && !entry.isRestartingIce) {
+            const delayMs =
+              ICE_RESTART_BACKOFF_MS[Math.min(entry.iceRestartAttempts, ICE_RESTART_BACKOFF_MS.length - 1)]
+            entry.iceRestartTimer = setTimeout(() => {
+              entry.iceRestartTimer = null
+              if (
+                entry.pc &&
+                (entry.pc.iceConnectionState === 'disconnected' || entry.pc.iceConnectionState === 'failed')
+              ) {
+                void this.restartIceForPeer(peerId)
+              }
+            }, delayMs)
+          }
+        } else if (state === 'failed') {
+          if (entry.iceRestartTimer) {
+            clearTimeout(entry.iceRestartTimer)
+            entry.iceRestartTimer = null
+          }
           void this.restartIceForPeer(peerId)
         }
       }
 
-      // Attach current local stream tracks to this peer
+      // Attach current local stream tracks to this peer & rebalance multi-peer upload budget
       if (this.options.localStream) {
         this.attachStreamToPeer(entry, this.options.localStream)
       }
+      this.rebalanceAllPeerSenders()
 
       return entry
     } catch (err) {
@@ -288,27 +422,94 @@ export class WebRtcMultiPeerBridge {
     }
   }
 
-  private optimizeSenderForEntry(sender: RTCRtpSender, kind: string): void {
+  private getAggregateUplinkEstimate(): number | null {
+    let maxMeasured: number | null = null
+    for (const peer of this.peers.values()) {
+      if (peer.availableOutgoingBitrate != null && peer.availableOutgoingBitrate > 0) {
+        maxMeasured =
+          maxMeasured === null
+            ? peer.availableOutgoingBitrate
+            : Math.max(maxMeasured, peer.availableOutgoingBitrate)
+      }
+    }
+    return maxMeasured
+  }
+
+  private applySenderBudgetForEntry(entry: PeerEntry): void {
+    if (!entry.pc || this.isDestroyed) return
+    const peerCount = Math.max(1, this.peers.size)
+    const isSpotlighted = this.spotlightUserId === entry.peerId
+    const desiredTier =
+      this.bandwidthMode !== 'auto'
+        ? this.bandwidthMode
+        : minBandwidthTier(entry.effectiveTier, entry.remoteCeiling)
+
+    // Estimate Coach's shared upload capacity from the highest-bandwidth peer path,
+    // then also respect this individual peer's own end-to-end path ceiling.
+    const aggregateUplink = this.getAggregateUplinkEstimate() ?? entry.availableOutgoingBitrate
+    const budget = computeMultiPeerSenderBudget({
+      tier: desiredTier,
+      peerCount,
+      isSpotlighted,
+      availableOutgoingBitrate: aggregateUplink,
+    })
+
+    let finalVideoBitrate = budget.maxVideoBitrate
+    if (
+      budget.videoEnabled &&
+      entry.availableOutgoingBitrate != null &&
+      entry.availableOutgoingBitrate > 0
+    ) {
+      const individualPathCap = Math.max(
+        70_000,
+        Math.round(entry.availableOutgoingBitrate * 0.82 - budget.maxAudioBitrate)
+      )
+      finalVideoBitrate = Math.min(finalVideoBitrate, individualPathCap)
+    }
+
+    entry.effectiveTier = budget.effectiveTier
+    entry.allocatedVideoBitrate = finalVideoBitrate
+
+    const spec = BANDWIDTH_PROFILES[budget.effectiveTier]
+
     try {
-      const spec = BANDWIDTH_PROFILES.hd
-      const params = sender.getParameters()
-      if (!params.encodings || params.encodings.length === 0) {
-        params.encodings = [{}]
-      }
-      if (kind === 'video') {
-        params.encodings[0].active = true
-        params.encodings[0].maxBitrate = spec.maxVideoBitrate
-        params.encodings[0].maxFramerate = spec.maxFramerate
-        params.encodings[0].scaleResolutionDownBy = 1
-        ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
-          spec.degradationPreference
-      } else if (kind === 'audio') {
-        params.encodings[0].active = true
-        params.encodings[0].maxBitrate = spec.maxAudioBitrate
-      }
-      void sender.setParameters(params).catch(() => {})
+      const senders = typeof entry.pc.getSenders === 'function' ? entry.pc.getSenders() : []
+      senders.forEach(sender => {
+        const params = sender.getParameters()
+        if (!params.encodings || params.encodings.length === 0) {
+          params.encodings = [{}]
+        }
+        const enc = params.encodings[0] as RTCRtpEncodingParameters & {
+          priority?: 'very-low' | 'low' | 'medium' | 'high'
+          networkPriority?: 'very-low' | 'low' | 'medium' | 'high'
+        }
+
+        if (sender.track?.kind === 'video') {
+          enc.active = budget.videoEnabled
+          enc.maxBitrate = finalVideoBitrate
+          if (budget.maxFramerate > 0) enc.maxFramerate = budget.maxFramerate
+          enc.scaleResolutionDownBy = budget.scaleResolutionDownBy
+          enc.priority = isSpotlighted ? 'medium' : spec.videoNetworkPriority
+          enc.networkPriority = isSpotlighted ? 'medium' : spec.videoNetworkPriority
+          ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
+            spec.degradationPreference
+          void sender.setParameters(params).catch(() => {})
+        } else if (sender.track?.kind === 'audio') {
+          enc.active = true
+          enc.maxBitrate = budget.maxAudioBitrate
+          enc.priority = 'high'
+          enc.networkPriority = 'high'
+          void sender.setParameters(params).catch(() => {})
+        }
+      })
     } catch {
       // Optional browser sender tuning
+    }
+  }
+
+  public rebalanceAllPeerSenders(): void {
+    for (const entry of this.peers.values()) {
+      this.applySenderBudgetForEntry(entry)
     }
   }
 
@@ -329,7 +530,6 @@ export class WebRtcMultiPeerBridge {
           transceiver.direction = 'sendrecv'
         }
         void transceiver.sender.replaceTrack(track).catch(() => {})
-        this.optimizeSenderForEntry(transceiver.sender, track.kind)
         return
       }
 
@@ -337,18 +537,15 @@ export class WebRtcMultiPeerBridge {
       const existing = senders.find(s => s.track?.kind === track.kind)
       if (existing) {
         void existing.replaceTrack(track).catch(() => {})
-        this.optimizeSenderForEntry(existing, track.kind)
       } else {
         try {
-          const sender = entry.pc.addTrack(track, stream)
-          if (sender) {
-            this.optimizeSenderForEntry(sender, track.kind)
-          }
+          entry.pc.addTrack(track, stream)
         } catch {
           // Already attached
         }
       }
     })
+    this.applySenderBudgetForEntry(entry)
   }
 
   public attachLocalStream(stream: MediaStream): void {
@@ -372,7 +569,7 @@ export class WebRtcMultiPeerBridge {
     try {
       entry.makingOffer = true
       const hasTransceivers = typeof entry.pc.addTransceiver === 'function'
-      const offer = await entry.pc.createOffer(
+      const rawOffer = await entry.pc.createOffer(
         hasTransceivers
           ? undefined
           : {
@@ -383,6 +580,12 @@ export class WebRtcMultiPeerBridge {
       if (entry.pc.signalingState !== 'stable') {
         entry.negotiationPending = true
         return null
+      }
+      const offer: RTCSessionDescriptionInit = {
+        ...rawOffer,
+        sdp: rawOffer.sdp
+          ? enhanceSdpForResilientCoaching(rawOffer.sdp, entry.effectiveTier)
+          : rawOffer.sdp,
       }
       await entry.pc.setLocalDescription(offer)
 
@@ -404,25 +607,265 @@ export class WebRtcMultiPeerBridge {
 
   public async restartIceForPeer(peerId: string): Promise<void> {
     const entry = this.peers.get(peerId)
-    if (!entry || !entry.pc || this.isDestroyed) return
+    if (!entry || !entry.pc || this.isDestroyed || entry.isRestartingIce) return
+    if (entry.iceRestartAttempts >= ICE_RESTART_BACKOFF_MS.length) return
+
+    entry.isRestartingIce = true
+    entry.iceRestartAttempts += 1
+    const cooldown =
+      ICE_RESTART_BACKOFF_MS[Math.min(entry.iceRestartAttempts - 1, ICE_RESTART_BACKOFF_MS.length - 1)]
+    setTimeout(() => {
+      entry.isRestartingIce = false
+    }, cooldown)
+
+    if (this.bandwidthMode === 'auto' && entry.iceRestartAttempts >= 2) {
+      entry.effectiveTier = entry.iceRestartAttempts >= 3 ? 'audio_first' : 'low_data'
+      this.applySenderBudgetForEntry(entry)
+    }
 
     try {
-      if ('restartIce' in entry.pc && typeof (entry.pc as { restartIce?: () => void }).restartIce === 'function') {
-        ;(entry.pc as { restartIce: () => void }).restartIce()
-      } else {
-        const offer = await entry.pc.createOffer({ iceRestart: true })
-        if (entry.pc.signalingState !== 'stable') return
-        await entry.pc.setLocalDescription(offer)
+      if (entry.isPolite) {
         this.sendSignal({
-          type: 'offer',
+          type: 'ice-restart-request',
           senderId: this.options.currentUserId,
           targetUserId: peerId,
-          sdp: entry.pc.localDescription || offer,
+          timestamp: Date.now(),
         })
+      } else {
+        if ('restartIce' in entry.pc && typeof (entry.pc as { restartIce?: () => void }).restartIce === 'function') {
+          try {
+            ;(entry.pc as { restartIce: () => void }).restartIce()
+          } catch {}
+        }
+        if (entry.pc.signalingState === 'have-local-offer') {
+          try {
+            await entry.pc.setLocalDescription({ type: 'rollback' })
+          } catch {
+            return
+          }
+        }
+        if (entry.pc.signalingState === 'stable') {
+          const rawOffer = await entry.pc.createOffer({ iceRestart: true })
+          if (entry.pc.signalingState === 'stable') {
+            const offer: RTCSessionDescriptionInit = {
+              ...rawOffer,
+              sdp: rawOffer.sdp
+                ? enhanceSdpForResilientCoaching(rawOffer.sdp, entry.effectiveTier)
+                : rawOffer.sdp,
+            }
+            await entry.pc.setLocalDescription(offer)
+            this.sendSignal({
+              type: 'offer',
+              senderId: this.options.currentUserId,
+              targetUserId: peerId,
+              sdp: entry.pc.localDescription || offer,
+            })
+          }
+        }
       }
     } catch (err) {
       this.options.onError?.(err instanceof Error ? err : new Error(String(err)))
     }
+  }
+
+  public async restartIceForAllPeers(): Promise<void> {
+    for (const peerId of Array.from(this.peers.keys())) {
+      await this.restartIceForPeer(peerId)
+    }
+  }
+
+  /**
+   * Samples WebRTC RTP telemetry across ALL connected squad peers independently,
+   * adapting each peer's bitrate + upload share without letting one slow athlete crash fiber teammates.
+   */
+  public async sampleNetworkHealth(): Promise<NetworkHealthSample | null> {
+    if (this.isDestroyed || this.peers.size === 0) return null
+
+    const browserHint = detectBrowserNetworkHint()
+    let worstRttMs: number | null = null
+    let worstLoss: number | null = null
+    let minAvailableOutgoingBitrate: number | null = null
+    let worstQuality: NetworkQualityGrade = 'excellent'
+    let lowestTier: ResolvedBandwidthTier = 'hd'
+
+    const qualitySeverity: Record<NetworkQualityGrade, number> = {
+      excellent: 0,
+      good: 1,
+      constrained: 2,
+      critical: 3,
+    }
+
+    for (const entry of this.peers.values()) {
+      let statsRttMs: number | null = null
+      let remoteRttMs: number | null = null
+      let packetLossRatio: number | null = null
+      let outboundPacketLossRatio: number | null = null
+      let jitterMs: number | null = null
+      let availableOutgoingBitrate: number | null = null
+      let framesPerSecond: number | null = null
+      let videoFreezeCountDelta: number | null = null
+      let qualityLimitationReason: string | null = null
+
+      if (typeof entry.pc.getStats === 'function') {
+        try {
+          const report = await entry.pc.getStats()
+          report.forEach((stat: Record<string, unknown>) => {
+            if (stat.type === 'candidate-pair' && stat.state === 'succeeded') {
+              if (typeof stat.currentRoundTripTime === 'number') {
+                statsRttMs = Math.round(stat.currentRoundTripTime * 1000)
+              }
+              if (typeof stat.availableOutgoingBitrate === 'number') {
+                availableOutgoingBitrate = stat.availableOutgoingBitrate
+              }
+            } else if (stat.type === 'inbound-rtp' && stat.kind === 'video') {
+              const received = typeof stat.packetsReceived === 'number' ? stat.packetsReceived : 0
+              const lost = typeof stat.packetsLost === 'number' ? Math.max(0, stat.packetsLost) : 0
+              const deltaRecv = received - entry.prevPacketsReceived
+              const deltaLost = lost - entry.prevPacketsLost
+              if (deltaRecv + deltaLost > 10 && deltaRecv >= 0 && deltaLost >= 0) {
+                packetLossRatio = deltaLost / (deltaRecv + deltaLost)
+              }
+              entry.prevPacketsReceived = received
+              entry.prevPacketsLost = lost
+              if (typeof stat.framesPerSecond === 'number') framesPerSecond = stat.framesPerSecond
+              if (typeof stat.jitter === 'number') {
+                const ms = Math.round(stat.jitter * 1000)
+                jitterMs = jitterMs === null ? ms : Math.max(jitterMs, ms)
+              }
+              if (typeof stat.freezeCount === 'number') {
+                videoFreezeCountDelta = Math.max(0, stat.freezeCount - entry.prevFreezeCount)
+                entry.prevFreezeCount = stat.freezeCount
+              }
+            } else if (stat.type === 'remote-inbound-rtp') {
+              if (typeof stat.fractionLost === 'number') {
+                outboundPacketLossRatio =
+                  outboundPacketLossRatio === null
+                    ? stat.fractionLost
+                    : Math.max(outboundPacketLossRatio, stat.fractionLost)
+              }
+              if (typeof stat.roundTripTime === 'number') {
+                const ms = Math.round(stat.roundTripTime * 1000)
+                remoteRttMs = remoteRttMs === null ? ms : Math.max(remoteRttMs, ms)
+              }
+            } else if (stat.type === 'outbound-rtp' && stat.kind === 'video') {
+              if (typeof stat.qualityLimitationReason === 'string' && stat.qualityLimitationReason !== 'none') {
+                qualityLimitationReason = stat.qualityLimitationReason
+              }
+            }
+          })
+        } catch {
+          // Ignore getStats errors
+        }
+      }
+
+      const webrtcRtt =
+        statsRttMs !== null || remoteRttMs !== null ? Math.max(statsRttMs ?? 0, remoteRttMs ?? 0) : null
+      const peerRtt = webrtcRtt ?? entry.latencyMs ?? browserHint.rttMs ?? null
+      entry.availableOutgoingBitrate = availableOutgoingBitrate
+
+      const peerSample: NetworkHealthSample = {
+        rttMs: peerRtt,
+        packetLossRatio,
+        outboundPacketLossRatio,
+        jitterMs,
+        availableOutgoingBitrate,
+        framesPerSecond,
+        videoFreezeCountDelta,
+        qualityLimitationReason,
+        saveData: browserHint.saveData,
+        effectiveType: browserHint.effectiveType,
+        downlinkMbps: browserHint.downlinkMbps,
+        remoteBandwidthCeiling: entry.remoteCeiling,
+        peerCount: this.peers.size,
+      }
+
+      const peerQuality = evaluateNetworkQuality(peerSample)
+      if (peerQuality === 'constrained' || peerQuality === 'critical') {
+        entry.consecutiveDegradedSamples = Math.min(10, entry.consecutiveDegradedSamples + 1)
+        entry.consecutiveHealthySamples = 0
+      } else {
+        entry.consecutiveDegradedSamples = 0
+        entry.consecutiveHealthySamples = Math.min(10, entry.consecutiveHealthySamples + 1)
+      }
+
+      entry.quality = peerQuality
+      entry.effectiveTier = resolveAdaptiveTierWithHysteresis({
+        mode: this.bandwidthMode,
+        currentTier: entry.effectiveTier,
+        quality: peerQuality,
+        consecutiveDegradedSamples: Math.max(1, entry.consecutiveDegradedSamples),
+        consecutiveHealthySamples: entry.consecutiveHealthySamples,
+        remoteBandwidthCeiling: entry.remoteCeiling,
+        videoFreezeCountDelta,
+      })
+
+      if (peerRtt !== null) worstRttMs = worstRttMs === null ? peerRtt : Math.max(worstRttMs, peerRtt)
+      const combinedLoss = Math.max(packetLossRatio ?? 0, outboundPacketLossRatio ?? 0)
+      if (packetLossRatio !== null || outboundPacketLossRatio !== null) {
+        worstLoss = worstLoss === null ? combinedLoss : Math.max(worstLoss, combinedLoss)
+      }
+      if (availableOutgoingBitrate !== null) {
+        minAvailableOutgoingBitrate =
+          minAvailableOutgoingBitrate === null
+            ? availableOutgoingBitrate
+            : Math.min(minAvailableOutgoingBitrate, availableOutgoingBitrate)
+      }
+      if (qualitySeverity[peerQuality] > qualitySeverity[worstQuality]) {
+        worstQuality = peerQuality
+      }
+    }
+
+    // Apply per-peer sender budgets in a second pass once every peer's uplink estimate is fresh
+    for (const entry of this.peers.values()) {
+      this.applySenderBudgetForEntry(entry)
+      if (getBandwidthTierRank(entry.effectiveTier) < getBandwidthTierRank(lowestTier)) {
+        lowestTier = entry.effectiveTier
+      }
+    }
+
+    const aggregateSample: NetworkHealthSample = {
+      rttMs: worstRttMs,
+      packetLossRatio: worstLoss,
+      availableOutgoingBitrate: minAvailableOutgoingBitrate,
+      peerCount: this.peers.size,
+      saveData: browserHint.saveData,
+      effectiveType: browserHint.effectiveType,
+      downlinkMbps: browserHint.downlinkMbps,
+    }
+
+    const changed = worstQuality !== this.aggregateQuality || lowestTier !== this.aggregateTier
+    this.aggregateQuality = worstQuality
+    this.aggregateTier = lowestTier
+    if (changed) {
+      this.options.onNetworkQualityChange?.(this.aggregateQuality, this.aggregateTier, aggregateSample)
+    }
+
+    return aggregateSample
+  }
+
+  public getEffectiveTier(): ResolvedBandwidthTier {
+    return this.aggregateTier
+  }
+
+  public getBandwidthMode(): BandwidthMode {
+    return this.bandwidthMode
+  }
+
+  public getNetworkQuality(): NetworkQualityGrade {
+    return this.aggregateQuality
+  }
+
+  public getPeerHealthSummary(): PeerAdaptiveHealth[] {
+    return Array.from(this.peers.values()).map(entry => ({
+      peerId: entry.peerId,
+      name: entry.name,
+      quality: entry.quality,
+      effectiveTier: entry.effectiveTier,
+      remoteCeiling: entry.remoteCeiling,
+      latencyMs: entry.latencyMs,
+      allocatedVideoBitrate: entry.allocatedVideoBitrate,
+      videoEnabled: BANDWIDTH_PROFILES[entry.effectiveTier].videoEnabled,
+    }))
   }
 
   private async drainPendingCandidates(entry: PeerEntry): Promise<void> {
@@ -461,6 +904,7 @@ export class WebRtcMultiPeerBridge {
         if (payload.senderRole === 'athlete') return
         const spotlightId = (payload.data as string | null) ?? null
         this.spotlightUserId = spotlightId
+        this.rebalanceAllPeerSenders()
         this.options.onSpotlightChange?.(spotlightId)
         return
       }
@@ -490,6 +934,25 @@ export class WebRtcMultiPeerBridge {
         if (incoming.mode) {
           this.setBandwidthMode(incoming.mode, false)
           this.options.onBandwidthModeSignal?.(incoming.mode, payload.senderId)
+        }
+        return
+      }
+
+      if (payload.type === 'bandwidth-ceiling' && payload.data) {
+        const incoming = payload.data as { maxTier?: ResolvedBandwidthTier }
+        const entry = this.peers.get(payload.senderId)
+        if (entry && incoming.maxTier && incoming.maxTier in BANDWIDTH_PROFILES) {
+          entry.remoteCeiling = incoming.maxTier === 'hd' ? null : incoming.maxTier
+          this.applySenderBudgetForEntry(entry)
+        }
+        return
+      }
+
+      if (payload.type === 'ice-restart-request') {
+        const entry = this.peers.get(payload.senderId)
+        if (entry && !entry.isPolite) {
+          entry.isRestartingIce = false
+          await this.restartIceForPeer(payload.senderId)
         }
         return
       }
@@ -579,7 +1042,13 @@ export class WebRtcMultiPeerBridge {
 
         await this.drainPendingCandidates(entry)
 
-        const answer = await entry.pc.createAnswer()
+        const rawAnswer = await entry.pc.createAnswer()
+        const answer: RTCSessionDescriptionInit = {
+          ...rawAnswer,
+          sdp: rawAnswer.sdp
+            ? enhanceSdpForResilientCoaching(rawAnswer.sdp, entry.effectiveTier)
+            : rawAnswer.sdp,
+        }
         await entry.pc.setLocalDescription(answer)
 
         this.sendSignal({
@@ -642,6 +1111,7 @@ export class WebRtcMultiPeerBridge {
 
   public broadcastSpotlight(userId: string | null): void {
     this.spotlightUserId = userId
+    this.rebalanceAllPeerSenders()
     this.sendSignal({
       type: 'spotlight',
       senderId: this.options.currentUserId,
@@ -670,31 +1140,13 @@ export class WebRtcMultiPeerBridge {
   }
 
   public setBandwidthMode(mode: BandwidthMode, broadcast = true): ResolvedBandwidthTier {
-    const tier = resolveEffectiveBandwidthTier(mode, 'excellent', 1)
-    const spec = BANDWIDTH_PROFILES[tier]
+    this.bandwidthMode = mode
+    const tier = resolveEffectiveBandwidthTier(mode, this.aggregateQuality, 1)
+    this.aggregateTier = tier
     for (const entry of this.peers.values()) {
-      try {
-        const senders = typeof entry.pc.getSenders === 'function' ? entry.pc.getSenders() : []
-        senders.forEach(sender => {
-          const params = sender.getParameters()
-          if (!params.encodings || params.encodings.length === 0) params.encodings = [{}]
-          if (sender.track?.kind === 'video') {
-            params.encodings[0].active = spec.videoEnabled
-            params.encodings[0].maxBitrate = spec.maxVideoBitrate
-            if (spec.maxFramerate > 0) params.encodings[0].maxFramerate = spec.maxFramerate
-            params.encodings[0].scaleResolutionDownBy = spec.scaleResolutionDownBy
-            ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
-              spec.degradationPreference
-            void sender.setParameters(params).catch(() => {})
-          } else if (sender.track?.kind === 'audio') {
-            params.encodings[0].active = true
-            params.encodings[0].maxBitrate = spec.maxAudioBitrate
-            void sender.setParameters(params).catch(() => {})
-          }
-        })
-      } catch {
-        // Optional browser sender tuning
-      }
+      entry.effectiveTier = tier
+      if (mode !== 'auto') entry.remoteCeiling = null
+      this.applySenderBudgetForEntry(entry)
     }
     if (broadcast) {
       this.sendSignal({
@@ -759,6 +1211,7 @@ export class WebRtcMultiPeerBridge {
       entry.remoteStream.getTracks().forEach(t => t.stop())
     }
     this.peers.delete(peerId)
+    this.rebalanceAllPeerSenders()
     this.options.onPeerLeft?.(peerId)
   }
 

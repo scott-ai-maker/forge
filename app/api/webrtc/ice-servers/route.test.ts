@@ -49,4 +49,48 @@ describe('GET /api/webrtc/ice-servers (#30)', () => {
     expect(typeof turnEntry.credential).toBe('string')
     expect(turnEntry.credential).not.toBe('super-secret-turn-hmac-key')
   })
+
+  it('mints ephemeral Cloudflare Calls TURN credentials and strips plaintext port-80 URLs', async () => {
+    vi.stubEnv('CLOUDFLARE_TURN_TOKEN_ID', 'cf-turn-key-123')
+    vi.stubEnv('CLOUDFLARE_TURN_API_TOKEN', 'cf-turn-api-secret')
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          iceServers: [
+            { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.cloudflare.com:443'] },
+            {
+              urls: [
+                'turn:turn.cloudflare.com:3478?transport=udp',
+                'turn:turn.cloudflare.com:80?transport=tcp',
+                'turns:turn.cloudflare.com:443?transport=tcp',
+                'turns:turn.cloudflare.com:5349?transport=tcp',
+              ],
+              username: 'cf-ephemeral-user',
+              credential: 'cf-ephemeral-pass',
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    )
+
+    try {
+      const res = await GET(new NextRequest('http://localhost:3000/api/webrtc/ice-servers'))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+
+      expect(body.turnRelayConfigured).toBe(true)
+      const turnEntry = body.iceServers.find((s: RTCIceServer) => s.username === 'cf-ephemeral-user')
+      expect(turnEntry).toBeDefined()
+      expect(turnEntry.urls).toEqual([
+        'turn:turn.cloudflare.com:3478?transport=udp',
+        'turns:turn.cloudflare.com:443?transport=tcp',
+        'turns:turn.cloudflare.com:5349?transport=tcp',
+      ])
+      expect(turnEntry.urls).not.toContain('turn:turn.cloudflare.com:80?transport=tcp')
+    } finally {
+      fetchSpy.mockRestore()
+    }
+  })
 })

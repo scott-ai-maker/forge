@@ -6,7 +6,11 @@ import GaaIcon from '@/components/ui/GaaIcon'
 import LiveTelestratorCanvas, { TelestratorTool, TelestratorColor } from './LiveTelestratorCanvas'
 import LiveSlowMoReplayModal from './LiveSlowMoReplayModal'
 import { createClient } from '@/lib/supabase-browser'
-import { WebRtcPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
+import {
+  WebRtcPeerBridge,
+  fetchAuthenticatedIceServers,
+  type LobbyParticipant,
+} from '@/lib/webrtc-peer-bridge'
 import LiveRemoteVideoFeed from './LiveRemoteVideoFeed'
 import LiveVirtualBackgroundStage from './LiveVirtualBackgroundStage'
 import { COACH_BACKGROUND_PRESETS, type CoachBackgroundPreset } from '@/lib/coach-backgrounds-catalog'
@@ -564,6 +568,9 @@ export default function LiveVideoCameraHud({
     })
     signalingChannelRef.current = channel
 
+    let isCancelled = false
+    let lastAppliedTier: ResolvedBandwidthTier | null = null
+
     const bridge = new WebRtcPeerBridge({
       sessionId,
       currentUserId,
@@ -583,12 +590,16 @@ export default function LiveVideoCameraHud({
       onNetworkQualityChange: (quality, tier) => {
         setNetworkQuality(quality)
         setEffectiveTier(tier)
-        void applyCameraBandwidthConstraints(streamRef.current, tier)
+        if (lastAppliedTier !== tier) {
+          lastAppliedTier = tier
+          void applyCameraBandwidthConstraints(streamRef.current, tier)
+        }
       },
       onBandwidthModeSignal: mode => {
         setBandwidthMode(mode)
         const nextTier = bridge.getEffectiveTier()
         setEffectiveTier(nextTier)
+        lastAppliedTier = nextTier
         void applyCameraBandwidthConstraints(streamRef.current, nextTier)
         const spec = BANDWIDTH_PROFILES[nextTier]
         showHudToast(`⚡ Stream adapted to ${spec.label} (${spec.estimatedKbps})`, 'emerald')
@@ -708,6 +719,9 @@ export default function LiveVideoCameraHud({
       })
       .subscribe(async status => {
         if (status === 'SUBSCRIBED') {
+          const iceServers = await fetchAuthenticatedIceServers(1500)
+          if (isCancelled) return
+          bridge.setIceServers(iceServers)
           bridge.init()
           // Track Athlete Presence in Live Studio Lobby
           try {
@@ -740,13 +754,19 @@ export default function LiveVideoCameraHud({
         }
       })
 
-    // Periodic ping & adaptive network health check every 6s without triggering SDP renegotiation
+    // Fast 2.5s adaptive network health check to catch congestion/freezes before bufferbloat stalls video
+    const healthTimer = setInterval(() => {
+      if (bridgeRef.current) {
+        void bridgeRef.current.sampleNetworkHealth()
+      }
+    }, 2500)
+
+    // Lightweight signaling heartbeat every 5s without triggering SDP renegotiation
     const pingTimer = setInterval(() => {
       if (bridgeRef.current) {
         bridgeRef.current.sendPing()
-        void bridgeRef.current.sampleNetworkHealth()
       }
-    }, 6000)
+    }, 5000)
 
     const conn = getNavigatorConnection()
     const handleNetworkChange = () => {
@@ -757,6 +777,8 @@ export default function LiveVideoCameraHud({
     conn?.addEventListener?.('change', handleNetworkChange)
 
     return () => {
+      isCancelled = true
+      clearInterval(healthTimer)
       clearInterval(pingTimer)
       conn?.removeEventListener?.('change', handleNetworkChange)
       bridge.destroy()

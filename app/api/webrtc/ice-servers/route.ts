@@ -63,13 +63,67 @@ export async function GET(req: NextRequest) {
   }
 
   const iceServers: RTCIceServer[] = [...DEFAULT_STUN_SERVERS]
+  let turnRelayConfigured = false
+
+  // Option A: Cloudflare Calls TURN API (global Anycast TURN, 1 TB/mo free tier, ephemeral credentials)
+  const cfTurnTokenId = process.env.CLOUDFLARE_TURN_TOKEN_ID?.trim()
+  const cfTurnApiToken = process.env.CLOUDFLARE_TURN_API_TOKEN?.trim()
+  if (cfTurnTokenId && cfTurnApiToken) {
+    try {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 1500)
+      try {
+        const cfRes = await fetch(
+          `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(cfTurnTokenId)}/credentials/generate-ice-servers`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${cfTurnApiToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ttl: 7200 }),
+            signal: controller.signal,
+          }
+        )
+        if (cfRes.ok) {
+          const cfJson = (await cfRes.json()) as { iceServers?: RTCIceServer[] | RTCIceServer }
+          const rawCfServers = Array.isArray(cfJson?.iceServers)
+            ? cfJson.iceServers
+            : cfJson?.iceServers
+              ? [cfJson.iceServers]
+              : []
+          const cfServers: RTCIceServer[] = []
+          for (const server of rawCfServers) {
+            const urls = Array.isArray(server.urls) ? server.urls : [server.urls]
+            const safeUrls = sanitizeTurnUrls(urls.join(','))
+            if (safeUrls.length > 0) {
+              cfServers.push({ ...server, urls: safeUrls })
+            }
+          }
+          if (cfServers.length > 0) {
+            iceServers.unshift(...cfServers)
+            turnRelayConfigured = cfServers.some(s => {
+              const urls = Array.isArray(s.urls) ? s.urls : [s.urls]
+              return urls.some(u => /^turns?:/i.test(u))
+            })
+          }
+        }
+      } finally {
+        clearTimeout(timer)
+      }
+    } catch {
+      // Non-fatal: fall through to configured TURN_SERVER_URLS or vetted STUN
+    }
+  }
+
+  // Option B: Self-hosted coturn / Twilio / Metered ephemeral HMAC or authenticated TURN credentials
   const rawTurnUrls = process.env.TURN_SERVER_URLS || ''
   const turnUrls = sanitizeTurnUrls(rawTurnUrls)
   const turnSharedSecret = process.env.TURN_SHARED_SECRET?.trim()
   const turnStaticUser = process.env.TURN_USERNAME?.trim()
   const turnStaticCredential = process.env.TURN_CREDENTIAL?.trim()
 
-  if (turnUrls.length > 0) {
+  if (!turnRelayConfigured && turnUrls.length > 0) {
     if (turnSharedSecret) {
       // RFC 8489 / coturn REST API ephemeral HMAC-SHA1 credential (valid for 2 hours)
       const ttlSeconds = 2 * 60 * 60
@@ -84,18 +138,21 @@ export async function GET(req: NextRequest) {
         username: ephemeralUsername,
         credential: ephemeralCredential,
       })
+      turnRelayConfigured = true
     } else if (turnStaticUser && turnStaticCredential) {
       iceServers.unshift({
         urls: turnUrls,
         username: turnStaticUser,
         credential: turnStaticCredential,
       })
+      turnRelayConfigured = true
     }
   }
 
   return NextResponse.json(
     {
       iceServers,
+      turnRelayConfigured,
       ttlSeconds: 7200,
     },
     { headers: NO_STORE_HEADERS }
